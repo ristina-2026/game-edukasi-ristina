@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Guessing Game - Kitchen Items</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            width: 95%;
+            max-width: 650px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(15px);
+            border-radius: 24px;
+            padding: 35px 30px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .game-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .game-title {
+            font-size: 2em;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 200, 0, 0.4);
+            margin-bottom: 5px;
+        }
+
+        .game-topic {
+            color: #ffd700;
+            font-size: 1.1em;
+            font-weight: bold;
+            background: rgba(255, 215, 0, 0.1);
+            display: inline-block;
+            padding: 4px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        /* Lives / Chances */
+        .lives-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .life-heart {
+            font-size: 2em;
+            transition: all 0.4s ease;
+            filter: drop-shadow(0 0 6px rgba(255, 80, 80, 0.6));
+        }
+
+        .life-heart.lost {
+            filter: grayscale(1) opacity(0.3);
+            transform: scale(0.7);
+        }
+
+        /* Clue Area */
+        .clue-area {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            min-height: 100px;
+        }
+
+        .clue-label {
+            color: #aaa;
+            font-size: 0.85em;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .clue-text {
+            color: #fff;
+            font-size: 1.15em;
+            line-height: 1.7;
+            font-style: italic;
+        }
+
+        .clue-history {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .clue-history-item {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 6px;
+            font-style: italic;
+        }
+
+        .clue-history-item span {
+            color: #ffd700;
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        /* Word Display (Hidden Letters) */
+        .word-display {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .letter-box {
+            width: 40px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #fff;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .letter-box.revealed {
+            background: rgba(78, 205, 196, 0.2);
+            border-color: #4ecdc4;
+            color: #4ecdc4;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Input Area */
+        .input-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .guess-input {
+            flex: 1;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1.1em;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .guess-input:focus {
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+        }
+
+        .guess-input::placeholder {
+            color: #666;
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-guess {
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            color: #1a1a2e;
+        }
+
+        .btn-guess:hover {
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .btn-hint {
+            background: linear-gradient(135deg, #4ecdc4, #2eb5ad);
+            color: #fff;
+        }
+
+        .btn-hint:hover {
+            box-shadow: 0 5px 20px rgba(78, 205, 196, 0.4);
+        }
+
+        .btn-restart {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: #fff;
+            width: 100%;
+            padding: 16px;
+            font-size: 1.1em;
+            border-radius: 14px;
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .buttons-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .buttons-row .btn {
+            flex: 1;
+        }
+
+        /* Feedback */
+        .feedback {
+            text-align: center;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 1.05em;
+            margin-bottom: 15px;
+            display: none;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .feedback.wrong {
+            display: block;
+            background: rgba(255, 107, 107, 0.15);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+
+        .feedback.correct {
+            display: block;
+            background: rgba(78, 205, 196, 0.15);
+            color: #4ecdc4;
+            border: 1px solid rgba(78, 205, 196, 0.3);
+        }
+
+        .feedback.info {
+            display: block;
+            background: rgba(255, 215, 0, 0.1);
+            color: #ffd700;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        /* Score Board */
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-label {
+            color: #888;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-value {
+            color: #fff;
+            font-size: 1.4em;
+            font-weight: bold;
+        }
+
+        .score-value.wins { color: #4ecdc4; }
+        .score-value.losses { color: #ff6b6b; }
+        .score-value.streak { color: #ffd700; }
+
+        /* Result Overlay */
+        .result-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 50;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            text-align: center;
+            border-radius: 24px;
+        }
+
+        .result-overlay.show {
+            display: flex;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .result-icon {
+            font-size: 5em;
+            margin-bottom: 15px;
+        }
+
+        .result-title {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .result-title.win { color: #4ecdc4; }
+        .result-title.lose { color: #ff6b6b; }
+
+        .result-word {
+            color: #ffd700;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .result-meaning {
+            color: #aaa;
+            font-size: 1em;
+            margin-bottom: 25px;
+        }
+
+        /* Start Screen */
+        .start-screen {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .start-screen h1 {
+            font-size: 2.2em;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .start-screen p {
+            color: #aaa;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .rules-box {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .rules-box h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .rules-box li {
+            color: #ccc;
+            margin-bottom: 8px;
+            margin-left: 15px;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .topic-select {
+            margin: 20px 0;
+        }
+
+        .topic-select label {
+            color: #aaa;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .topic-select select {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1em;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .topic-select select option {
+            background: #1a1a2e;
+            color: #fff;
+        }
+
+        /* Confetti */
+        .confetti-piece {
+            position: fixed;
+            top: -20px;
+            font-size: 1.5em;
+            z-index: 1000;
+            animation: confettiFall linear forwards;
+            pointer-events: none;
+        }
+
+        @keyframes confettiFall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Shake animation for wrong answer */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .shake {
+            animation: shake 0.5s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 500px) {
+            .game-container { padding: 20px 15px; }
+            .game-title { font-size: 1.5em; }
+            .letter-box { width: 32px; height: 40px; font-size: 1.1em; }
+            .input-area { flex-direction: column; }
+            .buttons-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container" id="gameContainer">
+    
+    <!-- START SCREEN -->
+    <div class="start-screen" id="startScreen">
+        <h1>🔤 Word Guessing</h1>
+        <p style="color: #ffd700; font-weight: bold; font-size: 1.1em;">Guess the Secret English Word!</p>
+        
+        <div class="rules-box">
+            <h3>📋 How to Play</h3>
+            <ul>
+                <li>A secret English word is hidden about a specific topic.</li>
+                <li>You will get <strong style="color:#4ecdc4;">clues one by one</strong> in English.</li>
+                <li>Type your guess and press <strong style="color:#ffd700;">GUESS</strong>.</li>
+                <li>You have <strong style="color:#ff6b6b;">5 chances</strong> (❤❤❤❤❤) to guess correctly.</li>
+                <li>Wrong guess = lose 1 heart + get the next clue.</li>
+                <li>Need extra help? Press <strong style="color:#4ecdc4;">HINT</strong> to reveal one letter (costs nothing but limited!).</li>
+                <li>Guess all words correctly to build your streak! 🔥</li>
+            </ul>
+        </div>
+
+        <div class="topic-select">
+            <label>Choose a Topic:</label>
+            <select id="topicSelect">
+                <option value="kitchen">🍳 Things in the Kitchen</option>
+                <option value="animals">🐾 Animals</option>
+                <option value="school">🏫 School Objects</option>
+                <option value="body">🦴 Body Parts</option>
+                <option value="fruits">🍎 Fruits</option>
+            </select>
+        </div>
+
+        <button class="btn btn-guess" style="width:100%; padding:16px; font-size:1.2em; border-radius:14px;" onclick="initGame()">
+            🎮 START GAME
+        </button>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div id="gameScreen" style="display:none;">
+        <div class="game-header">
+            <div class="game-title">🔤 Word Guessing</div>
+            <div class="game-topic" id="topicLabel">🍳 Kitchen Items</div>
+        </div>
+
+        <!-- Scoreboard -->
+        <div class="scoreboard">
+            <div class="score-item">
+                <div class="score-label">Wins</div>
+                <div class="score-value wins" id="winsCount">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">Losses</div>
+                <div class="score-value losses" id="lossesCount">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">Streak</div>
+                <div class="score-value streak" id="streakCount">0 🔥</div>
+            </div>
+        </div>
+
+        <!-- Lives -->
+        <div class="lives-container" id="livesContainer">
+            <span class="life-heart">❤️</span>
+            <span class="life-heart">❤️</span>
+            <span class="life-heart">❤️</span>
+            <span class="life-heart">❤️</span>
+            <span class="life-heart">❤️</span>
+        </div>
+
+        <!-- Hidden Word Display -->
+        <div class="word-display" id="wordDisplay"></div>
+
+        <!-- Clue Area -->
+        <div class="clue-area">
+            <div class="clue-label">💡 Current Clue</div>
+            <div class="clue-text" id="currentClue">Loading...</div>
+            <div class="clue-history" id="clueHistory"></div>
+        </div>
+
+        <!-- Feedback -->
+        <div class="feedback" id="feedback"></div>
+
+        <!-- Input -->
+        <div class="input-area">
+            <input type="text" class="guess-input" id="guessInput" placeholder="Type your guess here..." autocomplete="off" autofocus>
+        </div>
+
+        <!-- Buttons -->
+        <div class="buttons-row">
+            <button class="btn btn-guess" id="guessBtn" onclick="makeGuess()">🎯 GUESS</button>
+            <button class="btn btn-hint" id="hintBtn" onclick="useHint()">💡 HINT (<span id="hintsLeft">2</span>)</button>
+        </div>
+
+        <!-- Result Overlay -->
+        <div class="result-overlay" id="resultOverlay">
+            <div class="result-icon" id="resultIcon"></div>
+            <div class="result-title" id="resultTitle"></div>
+            <div class="result-word" id="resultWord"></div>
+            <div class="result-meaning" id="resultMeaning"></div>
+            <button class="btn btn-restart" onclick="nextRound()">▶ NEXT WORD</button>
+            <button class="btn" style="margin-top:10px; background:rgba(255,255,255,0.1); color:#aaa; width:100%;" onclick="backToMenu()">🏠 Main Menu</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============ WORD DATABASE ============
+const wordDatabase = {
+    kitchen: {
+        label: "🍳 Things in the Kitchen",
+        words: [
+            {
+                word: "blender",
+                meaning: "A machine used to mix or crush food into liquid.",
+                clues: [
+                    "I am an object commonly found in the kitchen.",
+                    "I need electricity to work properly.",
+                    "I have sharp blades inside my container.",
+                    "I spin very fast when you turn me on.",
+                    "You use me to make smoothies, juice, or crush ice."
+                ]
+            },
+            {
+                word: "spatula",
+                meaning: "A flat tool used for flipping or spreading food.",
+                clues: [
+                    "I am a small tool found in the kitchen.",
+                    "I don't need electricity or batteries.",
+                    "I have a long handle so your hand stays safe.",
+                    "My head is flat and wide.",
+                    "You use me to flip pancakes or eggs in a frying pan."
+                ]
+            },
+            {
+                word: "refrigerator",
+                meaning: "An appliance that keeps food cold and fresh.",
+                clues: [
+                    "I am a large appliance found in almost every kitchen.",
+                    "I run 24 hours a day using electricity.",
+                    "I have a door that you open and close many times a day.",
+                    "Inside me, it is always very cold.",
+                    "You put food and drinks inside me to keep them fresh."
+                ]
+            },
+            {
+                word: "kettle",
+                meaning: "A container used to boil water.",
+                clues: [
+                    "I am an object found in the kitchen.",
+                    "I am usually made of metal or plastic.",
+                    "You fill me with water before using me.",
+                    "When I finish my job, I might whistle or click off.",
+                    "You use me to boil water for making tea or coffee."
+                ]
+            },
+            {
+                word: "colander",
+                meaning: "A bowl with holes used to drain water from food.",
+                clues: [
+                    "I am a kitchen tool shaped like a bowl.",
+                    "I am usually made of metal or plastic.",
+                    "I have many small holes all over my body.",
+                    "Water flows through me, but solid things stay inside.",
+                    "You use me to drain water after boiling pasta or washing vegetables."
+                ]
+            }
+        ]
+    },
+    animals: {
+        label: "🐾 Animals",
+        words: [
+            {
+                word: "dolphin",
+                meaning: "A smart marine mammal that lives in the ocean.",
+                clues: [
+                    "I am a living creature, an animal.",
+                    "I live in the water, not on land.",
+                    "I am a mammal, which means I breathe air.",
+                    "I am known for being very intelligent and playful.",
+                    "I swim in the ocean and sometimes jump out of the waves."
+                ]
+            },
+            {
+                word: "eagle",
+                meaning: "A large bird of prey with excellent eyesight.",
+                clues: [
+                    "I am an animal that can fly.",
+                    "I am a bird, but I am not kept as a pet.",
+                    "I have very sharp claws and a curved beak.",
+                    "My eyesight is incredibly strong; I can see tiny things from very high up.",
+                    "I am a symbol of freedom and power, often seen soaring in the sky."
+                ]
+            },
+            {
+                word: "chameleon",
+                meaning: "A lizard that can change its skin color.",
+                clues: [
+                    "I am an animal that lives mostly in trees.",
+                    "I am a type of reptile.",
+                    "My eyes can look in two different directions at the same time.",
+                    "I catch insects using my very long, sticky tongue.",
+                    "I am famous for being able to change the color of my skin."
+                ]
+            }
+        ]
+    },
+    school: {
+        label: "🏫 School Objects",
+        words: [
+            {
+                word: "compass",
+                meaning: "A tool used to draw perfect circles in math.",
+                clues: [
+                    "I am an object you bring to school.",
+                    "I am usually kept in your pencil case or math set.",
+                    "I am made of metal and have two legs.",
+                    "One of my legs has a sharp point, the other holds a pencil.",
+                    "You use me in math class to draw perfect circles."
+                ]
+            },
+            {
+                word: "eraser",
+                meaning: "A rubber tool used to remove pencil marks.",
+                clues: [
+                    "I am a small object found in schools.",
+                    "I am usually made of rubber.",
+                    "I get smaller the more you use me.",
+                    "I leave little crumbs behind when I work.",
+                    "You use me to remove mistakes made by a pencil."
+                ]
+            }
+        ]
+    },
+    body: {
+        label: "🦴 Body Parts",
+        words: [
+            {
+                word: "elbow",
+                meaning: "The joint in the middle of your arm.",
+                clues: [
+                    "I am a part of the human body.",
+                    "I am located on your upper limbs.",
+                    "I am a joint, which means I can bend.",
+                    "People sometimes jokingly call me funny because hitting me feels weird.",
+                    "I am the part that connects your upper arm to your lower arm."
+                ]
+            },
+            {
+                word: "tongue",
+                meaning: "The muscle in your mouth used for tasting and speaking.",
+                clues: [
+                    "I am a part of the human body.",
+                    "I am located inside your head.",
+                    "I am actually a very strong muscle.",
+                    "I have tiny bumps on me called taste buds.",
+                    "You use me to taste food and to speak clearly."
+                ]
+            }
+        ]
+    },
+    fruits: {
+        label: "🍎 Fruits",
+        words: [
+            {
+                word: "pineapple",
+                meaning: "A tropical fruit with spiky skin and sweet yellow flesh.",
+                clues: [
+                    "I am something you can eat.",
+                    "I grow in tropical places.",
+                    "I have a crown of green leaves on my head.",
+                    "My outside skin is rough, spiky, and hard.",
+                    "My inside is yellow, sweet, and slightly sour."
+                ]
+            },
+            {
+                word: "avocado",
+                meaning: "A green fruit with a large seed, often used in salads.",
+                clues: [
+                    "I am technically a fruit, though people treat me like a vegetable.",
+                    "I have dark green, bumpy skin.",
+                    "Inside, my flesh is light green and very soft.",
+                    "I have one large, round brown seed in my center.",
+                    "You mash me to make guacamole or put me on toast."
+                ]
+            }
+        ]
+    }
+};
+
+// ============ AUDIO SYSTEM ============
+let audioCtx = null;
+
+function initAudio() {
+    if (!audioCtx) {
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
+        catch(e) {}
+    }
+}
+
+function playTone(freq, duration, type = 'sine', vol = 0.2) {
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+}
+
+function playCorrectSound() {
+    playTone(523.25, 0.15, 'sine', 0.25);
+    setTimeout(() => playTone(659.25, 0.15, 'sine', 0.25), 100);
+    setTimeout(() => playTone(783.99, 0.15, 'sine', 0.25), 200);
+    setTimeout(() => playTone(1046.5, 0.3, 'sine', 0.3), 300);
+}
+
+function playWrongSound() {
+    playTone(300, 0.2, 'sawtooth', 0.15);
+    setTimeout(() => playTone(200, 0.4, 'sawtooth', 0.15), 150);
+}
+
+function playLoseSound() {
+    playTone(400, 0.3, 'sawtooth', 0.2);
+    setTimeout(() => playTone(300, 0.3, 'sawtooth', 0.2), 250);
+    setTimeout(() => playTone(200, 0.5, 'sawtooth', 0.2), 500);
+}
+
+function playHintSound() {
+    playTone(800, 0.1, 'triangle', 0.15);
+    setTimeout(() => playTone(1000, 0.15, 'triangle', 0.15), 80);
+}
+
+// ============ GAME STATE ============
+let state = {
+    currentTopic: 'kitchen',
+    currentWordIndex: 0,
+    wordList: [],
+    secretWord: '',
+    meaning: '',
+    clues: [],
+    currentClueIndex: 0,
+    lives: 5,
+    maxLives: 5,
+    hintsRemaining: 2,
+    revealedLetters: [],
+    wins: 0,
+    losses: 0,
+    streak: 0,
+    gameOver: false,
+    usedWords: []
+};
+
+// ============ GAME FUNCTIONS ============
+function initGame() {
+    initAudio();
+    const topicKey = document.getElementById('topicSelect').value;
+    state.currentTopic = topicKey;
+    state.wordList = [...wordDatabase[topicKey].words];
+    // Shuffle
+    state.wordList.sort(() => Math.random() - 0.5);
+    state.usedWords = [];
+    state.wins = 0;
+    state.losses = 0;
+    state.streak = 0;
+
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('gameScreen').style.display = 'block';
+    document.getElementById('topicLabel').textContent = wordDatabase[topicKey].label;
+    
+    updateScoreboard();
+    loadNextWord();
+}
+
+function loadNextWord() {
+    if (state.wordList.length === 0) {
+        // Reset word list
+        state.wordList = [...wordDatabase[state.currentTopic].words];
+        state.wordList.sort(() => Math.random() - 0.5);
+    }
+
+    const wordObj = state.wordList.pop();
+    state.secretWord = wordObj.word.toLowerCase();
+    state.meaning = wordObj.meaning;
+    state.clues = wordObj.clues;
+    state.currentClueIndex = 0;
+    state.lives = 5;
+    state.hintsRemaining = 2;
+    state.revealedLetters = [];
+    state.gameOver = false;
+
+    document.getElementById('resultOverlay').classList.remove('show');
+    document.getElementById('feedback').className = 'feedback';
+    document.getElementById('feedback').style.display = 'none';
+    document.getElementById('guessInput').value = '';
+    document.getElementById('guessInput').disabled = false;
+    document.getElementById('guessBtn').disabled = false;
+    document.getElementById('hintBtn').disabled = false;
+    document.getElementById('hintsLeft').textContent = state.hintsRemaining;
+    document.getElementById('clueHistory').innerHTML = '';
+
+    renderLives();
+    renderWordDisplay();
+    showCurrentClue();
+    document.getElementById('guessInput').focus();
+}
+
+function renderLives() {
+    const container = document.getElementById('livesContainer');
+    container.innerHTML = '';
+    for (let i = 0; i < state.maxLives; i++) {
+        const heart = document.createElement('span');
+        heart.className = 'life-heart' + (i >= state.lives ? ' lost' : '');
+        heart.textContent = '❤️';
+        container.appendChild(heart);
+    }
+}
+
+function renderWordDisplay() {
+    const container = document.getElementById('wordDisplay');
+    container.innerHTML = '';
+    for (let i = 0; i < state.secretWord.length; i++) {
+        const box = document.createElement('div');
+        box.className = 'letter-box';
+        box.id = `letter-${i}`;
+        if (state.revealedLetters.includes(i)) {
+            box.textContent = state.secretWord[i];
+            box.classList.add('revealed');
+        } else {
+            box.textContent = '?';
+        }
+        container.appendChild(box);
+    }
+}
+
+function showCurrentClue() {
+    const clueEl = document.getElementById('currentClue');
+    if (state.currentClueIndex < state.clues.length) {
+        clueEl.textContent = `"${state.clues[state.currentClueIndex]}"`;
+    } else {
+        clueEl.textContent = "No more clues available! Use your best judgment.";
+    }
+}
+
+function addClueToHistory() {
+    const historyEl = document.getElementById('clueHistory');
+    const item = document.createElement('div');
+    item.className = 'clue-history-item';
+    item.innerHTML = `<span>Clue ${state.currentClueIndex}:</span> "${state.clues[state.currentClueIndex - 1]}"`;
+    historyEl.appendChild(item);
+}
+
+function showFeedback(message, type) {
+    const fb = document.getElementById('feedback');
+    fb.textContent = message;
+    fb.className = `feedback ${type}`;
+    fb.style.display = 'block';
+}
+
+function makeGuess() {
+    if (state.gameOver) return;
+    
+    const input = document.getElementById('guessInput');
+    const guess = input.value.trim().toLowerCase();
+
+    if (!guess) {
+        showFeedback("⚠️ Please type your guess first!", "info");
+        return;
+    }
+
+    if (guess === state.secretWord) {
+        // CORRECT!
+        handleWin();
+    } else {
+        // WRONG
+        handleWrongGuess(guess);
+    }
+
+    input.value = '';
+    input.focus();
+}
+
+function handleWrongGuess(guess) {
+    state.lives--;
+    playWrongSound();
+    
+    // Shake effect
+    const container = document.getElementById('gameContainer');
+    container.classList.add('shake');
+    setTimeout(() => container.classList.remove('shake'), 500);
+
+    renderLives();
+
+    if (state.lives <= 0) {
+        // Game Over
+        handleLoss();
+    } else {
+        // Show feedback and next clue
+        let msg = `❌ Wrong! "${guess}" is not correct. ${state.lives} chance(s) left.`;
+        showFeedback(msg, "wrong");
+
+        // Advance clue
+        if (state.currentClueIndex < state.clues.length - 1) {
+            state.currentClueIndex++;
+            addClueToHistory();
+            setTimeout(() => {
+                showCurrentClue();
+                document.getElementById('feedback').style.display = 'none';
+            }, 1500);
+        }
+    }
+}
+
+function handleWin() {
+    state.gameOver = true;
+    state.wins++;
+    state.streak++;
+    updateScoreboard();
+    playCorrectSound();
+
+    // Reveal all letters
+    for (let i = 0; i < state.secretWord.length; i++) {
+        state.revealedLetters.push(i);
+    }
+    renderWordDisplay();
+
+    showFeedback(`✅ Correct! The word is "${state.secretWord.toUpperCase()}"!`, "correct");
+
+    setTimeout(() => {
+        showResult(true);
+        createConfetti();
+    }, 1200);
+}
+
+function handleLoss() {
+    state.gameOver = true;
+    state.losses++;
+    state.streak = 0;
+    updateScoreboard();
+    playLoseSound();
+
+    // Reveal all letters
+    for (let i = 0; i < state.secretWord.length; i++) {
+        state.revealedLetters.push(i);
+    }
+    renderWordDisplay();
+
+    showFeedback(`💀 Out of chances! The word was "${state.secretWord.toUpperCase()}".`, "wrong");
+
+    setTimeout(() => {
+        showResult(false);
+    }, 1500);
+}
+
+function useHint() {
+    if (state.gameOver || state.hintsRemaining <= 0) return;
+
+    // Find unrevealed letter indices
+    const unrevealed = [];
+    for (let i = 0; i < state.secretWord.length; i++) {
+        if (!state.revealedLetters.includes(i)) {
+            unrevealed.push(i);
+        }
+    }
+
+    if (unrevealed.length <= 1) {
+        showFeedback("⚠️ Almost all letters are revealed! Just guess it!", "info");
+        return;
+    }
+
+    // Pick random unrevealed letter
+    const randomIdx = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+    state.revealedLetters.push(randomIdx);
+    state.hintsRemaining--;
+
+    document.getElementById('hintsLeft').textContent = state.hintsRemaining;
+    if (state.hintsRemaining <= 0) {
+        document.getElementById('hintBtn').disabled = true;
+    }
+
+    playHintSound();
+    renderWordDisplay();
+    showFeedback(`💡 Hint! Letter '${state.secretWord[randomIdx].toUpperCase()}' revealed at position ${randomIdx + 1}.`, "info");
+    setTimeout(() => {
+        if (!state.gameOver) document.getElementById('feedback').style.display = 'none';
+    }, 2000);
+}
+
+function showResult(won) {
+    const overlay = document.getElementById('resultOverlay');
+    document.getElementById('resultIcon').textContent = won ? '🏆' : '💀';
+    
+    const title = document.getElementById('resultTitle');
+    title.textContent = won ? 'CORRECT!' : 'GAME OVER!';
+    title.className = `result-title ${won ? 'win' : 'lose'}`;
+    
+    document.getElementById('resultWord').textContent = state.secretWord;
+    document.getElementById('resultMeaning').textContent = `Meaning: ${state.meaning}`;
+    
+    overlay.classList.add('show');
+    document.getElementById('guessInput').disabled = true;
+    document.getElementById('guessBtn').disabled = true;
+    document.getElementById('hintBtn').disabled = true;
+}
+
+function nextRound() {
+    loadNextWord();
+}
+
+function backToMenu() {
+    document.getElementById('gameScreen').style.display = 'none';
+    document.getElementById('startScreen').style.display = 'block';
+    document.getElementById('resultOverlay').classList.remove('show');
+}
+
+function updateScoreboard() {
+    document.getElementById('winsCount').textContent = state.wins;
+    document.getElementById('lossesCount').textContent = state.losses;
+    document.getElementById('streakCount').textContent = `${state.streak} 🔥`;
+}
+
+function createConfetti() {
+    const emojis = ['🎉', '⭐', '✨', '🎊', '💫', '🌟'];
+    for (let i = 0; i < 25; i++) {
+        setTimeout(() => {
+            const el = document.createElement('div');
+            el.className = 'confetti-piece';
+            el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 4000);
+        }, i * 80);
+    }
+}
+
+// ============ INPUT HANDLING ============
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('guessInput');
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            makeGuess();
+        }
+    });
+});
+</script>
+</body>
+</html>
