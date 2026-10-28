@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Descriptive Text Duck Race</title>
+<style>
+:root{--navy:#183b70;--blue:#5dc8ef;--cream:#fffaf0;--pink:#ff8fbd;--purple:#a98bff;--green:#70d6b0;--gold:#ffd76a}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Trebuchet MS",Arial,sans-serif;color:var(--navy);background:linear-gradient(#c9f3ff,#e6f8ff 45%,#c8f3d7);min-height:100vh}
+header{text-align:center;padding:24px 14px 12px}
+h1{font-size:clamp(1.7rem,4vw,3rem);margin:0;color:#fff;text-shadow:0 4px 0 #2679bb,0 7px 12px #3273a766;letter-spacing:1px}
+.subtitle{margin:10px auto 0;font-weight:700;max-width:750px}
+main{width:min(1100px,94vw);margin:0 auto 36px}
+.topline{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin:12px 0}
+.pill{background:#fff;border:2px solid #b9e9ff;border-radius:999px;padding:9px 15px;font-weight:800;box-shadow:0 3px 0 #a5d9ed}
+.layout{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;align-items:stretch}
+.panel{background:rgba(255,250,240,.96);border:3px solid white;border-radius:26px;padding:20px;box-shadow:0 8px 0 #9ed9d6,0 12px 24px #317f9930}
+.panel h2{margin:0 0 12px;font-size:1.35rem}
+.race{position:relative;overflow:hidden;min-height:410px;background:linear-gradient(#9ce5ff 0 28%,#65d8f4 28% 100%);border-radius:22px;border:4px solid #fff}
+.cloud{position:absolute;top:18px;font-size:2rem;opacity:.85}.c1{left:9%}.c2{right:12%;top:45px}
+.bank{position:absolute;left:0;right:0;top:26%;height:25px;background:#8dd98b;border-top:5px solid #5ab76e;border-bottom:5px solid #5ab76e}
+.water{position:absolute;inset:31% 0 0;background:repeating-linear-gradient(180deg,#58cbed 0 35px,#77dcf4 36px 39px)}
+.lane{height:31%;position:relative;border-bottom:2px dashed #d6fbff;display:flex;align-items:center;padding-left:12px}
+.duck{font-size:2.45rem;position:absolute;left:4%;top:50%;transform:translateY(-50%);transition:left .8s cubic-bezier(.2,.8,.3,1);filter:drop-shadow(0 4px 1px #258ab855)}
+.duckname{position:absolute;left:4%;top:10%;font-size:.72rem;background:#fff;padding:3px 8px;border-radius:10px;font-weight:800}
+.finish{position:absolute;right:10px;top:31%;bottom:0;width:14px;background:repeating-linear-gradient(0deg,#fff 0 12px,#263d61 12px 24px);border-left:2px solid #fff;border-right:2px solid #fff}
+.finishlabel{position:absolute;right:0;top:23%;background:#ff668e;color:#fff;font-weight:900;padding:6px 10px;border-radius:10px 0 0 10px}
+.startline{position:absolute;left:5px;top:31%;bottom:0;border-left:3px dashed #fff}
+.question{background:white;border-radius:18px;padding:18px;border:2px dashed #e5d8ff}
+.qmeta{font-size:.85rem;font-weight:900;color:#825fe3;margin-bottom:8px}
+#questionText{font-size:1.18rem;line-height:1.45;font-weight:800;margin:0 0 15px}
+.answers{display:grid;gap:10px}
+.answer{width:100%;border:2px solid #d9e9f8;background:#f3faff;color:var(--navy);border-radius:14px;padding:12px;text-align:left;font-size:1rem;font-weight:700;cursor:pointer;transition:.15s}
+.answer:hover:not(:disabled){transform:translateY(-2px);border-color:#64bde7;background:#e7f8ff}
+.answer:disabled{cursor:default;opacity:.9}
+.answer.correct{background:#d8f8e9;border-color:#55c995}
+.answer.wrong{background:#ffe0eb;border-color:#fa83ad}
+.feedback{min-height:48px;margin:12px 0 0;font-weight:800;line-height:1.4}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+button.action{border:0;border-radius:999px;padding:12px 18px;font-size:1rem;font-weight:900;cursor:pointer;box-shadow:0 4px 0 #0002}
+.primary{background:var(--purple);color:#fff}.secondary{background:#ffe49a;color:#604400}.primary:disabled{opacity:.5;cursor:not-allowed}
+.progress{height:12px;background:#e5eff8;border-radius:999px;overflow:hidden;margin:8px 0 14px}.progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#72dcb3,#66c8f2);transition:width .3s}
+.result{display:none;text-align:center;margin-top:18px;padding:20px;background:#fff;border:3px solid #fff;border-radius:22px;box-shadow:0 6px 0 #a4dcca}
+.result h2{margin-top:0}.winner{font-size:2.4rem}
+.tip{margin-top:14px;background:#fff3c9;border:2px solid #ffe18a;padding:12px;border-radius:15px;font-size:.95rem;line-height:1.45}
+footer{text-align:center;padding:0 16px 26px;font-size:.85rem;font-weight:700;color:#316a7c}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.race{min-height:340px}.panel{padding:15px}.duck{font-size:2rem}.lane{height:31%}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🦆 DESCRIPTIVE TEXT DUCK RACE 🏁</h1>
+  <p class="subtitle">Read • Think • Choose • Race to the Finish!</p>
+</header>
+<main>
+  <div class="topline">
+    <span class="pill">⭐ Level <span id="level">1</span> / 10</span>
+    <span class="pill">✅ Correct answers: <span id="score">0</span></span>
+    <span class="pill">🏆 Race progress: <span id="progressText">0%</span></span>
+  </div>
+  <div class="progress"><span id="progressBar"></span></div>
+  <div class="layout">
+    <section class="panel">
+      <h2>🌈 The Duck River</h2>
+      <div class="race" aria-label="Duck race track">
+        <span class="cloud c1">☁️</span><span class="cloud c2">☁️</span>
+        <div class="bank"></div><div class="water">
+          <div class="lane"><span class="duckname">Sunny</span><span class="duck" id="duck0">🦆</span></div>
+          <div class="lane"><span class="duckname">Puddles</span><span class="duck" id="duck1">🐥</span></div>
+          <div class="lane"><span class="duckname">Daisy</span><span class="duck" id="duck2">🦆</span></div>
+        </div>
+        <div class="startline"></div><div class="finish"></div><div class="finishlabel">FINISH 🏁</div>
+      </div>
+      <div class="tip"><b>💡 Remember!</b><br>Descriptive text describes a particular person, place, animal, or thing. Its generic structure is <b>Identification + Description</b>.</div>
+      <div class="actions">
+        <button class="action primary" id="startBtn">▶ Start Game</button>
+        <button class="action secondary" id="resetBtn">↻ Restart</button>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>📚 Answer the Question!</h2>
+      <div class="question">
+        <div class="qmeta" id="qmeta">QUESTION 1 OF 10</div>
+        <p id="questionText">Press “Start Game” to begin your race!</p>
+        <div class="answers" id="answers"></div>
+        <p class="feedback" id="feedback" aria-live="polite"></p>
+        <div class="actions"><button class="action primary" id="nextBtn" disabled>Next Question ➜</button></div>
+      </div>
+    </section>
+  </div>
+  <section class="result" id="result">
+    <div class="winner">🏆 🦆 🎉</div>
+    <h2>Race Completed!</h2>
+    <p id="resultText"></p>
+    <p id="resultMessage"></p>
+    <button class="action primary" id="playAgainBtn">Play Again ↻</button>
+  </section>
+</main>
+<footer>Made for English class • Descriptive Text • Have fun learning! 🌼</footer>
+<script>
+const questions = [
+ {q:"What does descriptive text describe?",a:["A person, place, animal, or thing","Past events in time order","Steps to make something"],c:0,e:"Descriptive text gives details about a particular person, place, animal, or thing."},
+ {q:"What is the generic structure of descriptive text?",a:["Orientation and complication","Identification and description","Goal, materials, and steps"],c:1,e:"Identification introduces the subject; description tells its characteristics."},
+ {q:"Which sentence is an identification?",a:["It has a long tail and soft fur.","My cat is named Milo.","It likes sleeping on the sofa."],c:1,e:"“My cat is named Milo” introduces the subject being described."},
+ {q:"Which word is an adjective?",a:["Beautiful","Garden","Run"],c:0,e:"“Beautiful” is an adjective because it describes a noun."},
+ {q:"Choose the best adjective: “The elephant is ____.”",a:["huge","slowly","trunk"],c:0,e:"“Huge” is an adjective describing the elephant's size."},
+ {q:"Which sentence describes a place?",a:["I visited my aunt yesterday.","The library is quiet and spacious.","Please open your book."],c:1,e:"The sentence describes characteristics of the library."},
+ {q:"In “She has bright eyes,” which word is the noun?",a:["She","bright","eyes"],c:2,e:"“Eyes” is a noun; “bright” describes the eyes."},
+ {q:"What tense is commonly used in descriptive text?",a:["Simple present tense","Simple future tense only","Past continuous tense only"],c:0,e:"Descriptive text commonly uses simple present tense for general characteristics."},
+ {q:"Read: “Bali has beautiful beaches and green rice fields.” What is described?",a:["A person","A place","An object"],c:1,e:"The sentence describes Bali, a place."},
+ {q:"Which sentence uses the simple present tense correctly?",a:["The dog have brown fur.","The dog has brown fur.","The dog having brown fur."],c:1,e:"Use “has” with the singular subject “the dog.”"}
+];
+let current=0, score=0, started=false, answered=false, positions=[4,4,4];
+const $=id=>document.getElementById(id);
+function renderQuestion(){
+ answered=false;
+ $('level').textContent=current+1;$('qmeta').textContent=`QUESTION ${current+1} OF ${questions.length}`;
+ $('questionText').textContent=questions[current].q;$('feedback').textContent='';
+ $('answers').innerHTML='';
+ questions[current].a.forEach((ans,i)=>{
+   const b=document.createElement('button');b.className='answer';b.textContent=String.fromCharCode(65+i)+'. '+ans;
+   b.onclick=()=>chooseAnswer(i,b);$('answers').appendChild(b);
+ });
+ $('nextBtn').disabled=true;
+}
+function chooseAnswer(i,btn){
+ if(answered||!started)return;answered=true;
+ const q=questions[current];[...$('answers').children].forEach((b,j)=>{b.disabled=true;if(j===q.c)b.classList.add('correct');});
+ if(i===q.c){score++;$('score').textContent=score;$('feedback').textContent='🎉 Correct! '+q.e;moveDucks(true);}
+ else{$('feedback').textContent='🌱 Not quite. '+q.e;btn.classList.add('wrong');moveDucks(false);}
+ const pct=Math.round((current+1)/questions.length*100);$('progressBar').style.width=pct+'%';$('progressText').textContent=pct+'%';
+ $('nextBtn').disabled=false;
+ if(current===questions.length-1)$('nextBtn').textContent='See Results 🏆';
+}
+function moveDucks(correct){
+ positions=positions.map((p,i)=>Math.min(85,p+(correct?(i===0?17:i===1?13:10):(i===0?5:i===1?7:4))));
+ // The race stays playful and visual; a correct answer gives the team a bigger boost.
+ positions.forEach((p,i)=>$('duck'+i).style.left=p+'%');
+}
+function startGame(){started=true;current=0;score=0;positions=[4,4,4];$('score').textContent='0';$('progressBar').style.width='0%';$('progressText').textContent='0%';$('result').style.display='none';positions.forEach((p,i)=>$('duck'+i).style.left=p+'%');$('startBtn').textContent='🏁 Game in Progress';$('startBtn').disabled=true;renderQuestion();}
+$('startBtn').onclick=()=>{if(!started)startGame()};
+$('nextBtn').onclick=()=>{
+ if(!answered)return;
+ if(current<questions.length-1){current++;renderQuestion();}
+ else{
+  $('result').style.display='block';
+  $('resultText').textContent=`Your score: ${score} / ${questions.length}`;
+  $('resultMessage').textContent=score>=8?'Excellent! You are a Descriptive Text Champion! 🌟':score>=5?'Good job! Review the tips and race again! 💪':'Keep practicing! Read the explanations and try again. 🌼';
+  $('result').scrollIntoView({behavior:'smooth',block:'center'});
+ }
+};
+$('resetBtn').onclick=()=>{started=false;answered=false;current=0;score=0;positions=[4,4,4];$('score').textContent='0';$('level').textContent='1';$('progressBar').style.width='0%';$('progressText').textContent='0%';positions.forEach((p,i)=>$('duck'+i).style.left=p+'%');$('startBtn').disabled=false;$('startBtn').textContent='▶ Start Game';$('qmeta').textContent='QUESTION 1 OF 10';$('questionText').textContent='Press “Start Game” to begin your race!';$('answers').innerHTML='';$('feedback').textContent='';$('nextBtn').disabled=true;$('nextBtn').textContent='Next Question ➜';$('result').style.display='none';};
+$('playAgainBtn').onclick=()=>{$('resetBtn').click();startGame();window.scrollTo({top:0,behavior:'smooth'});};
+</script>
+</body>
+</html>
