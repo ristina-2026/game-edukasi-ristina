@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tug of War - Descriptive Text Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .game-container {
+            width: 95%;
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-title {
+            text-align: center;
+            color: #fff;
+            font-size: 2em;
+            margin-bottom: 5px;
+            text-shadow: 0 0 20px rgba(255, 200, 0, 0.5);
+        }
+
+        .game-subtitle {
+            text-align: center;
+            color: #aaa;
+            font-size: 1em;
+            margin-bottom: 25px;
+        }
+
+        /* Tug of War Arena */
+        .arena {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(180deg, #2d5016 0%, #4a7c23 40%, #5a8f2a 60%, #3d6b1a 100%);
+            border-radius: 15px;
+            margin-bottom: 25px;
+            overflow: hidden;
+            border: 3px solid #2a4a10;
+        }
+
+        .arena::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 4px;
+            height: 80%;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .arena-label {
+            position: absolute;
+            bottom: 10px;
+            font-size: 0.75em;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: bold;
+        }
+
+        .arena-label.left {
+            left: 15px;
+        }
+
+        .arena-label.right {
+            right: 15px;
+        }
+
+        .mud-pit {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(ellipse, #5c3d1a 0%, #3d2a10 70%, transparent 100%);
+            border-radius: 50%;
+            opacity: 0.6;
+        }
+
+        /* Teams */
+        .team {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .team-left {
+            left: 15%;
+        }
+
+        .team-right {
+            right: 15%;
+        }
+
+        .team-icon {
+            font-size: 3em;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
+        .team-name {
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.85em;
+            margin-top: 5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .team-score {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        /* Rope */
+        .rope-container {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 12px;
+            transform: translateY(-50%);
+        }
+
+        .rope {
+            position: absolute;
+            top: 0;
+            left: 10%;
+            right: 10%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                90deg,
+                #8B4513 0px,
+                #A0522D 5px,
+                #8B4513 10px
+            );
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .rope-marker {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            background: #ff0000;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            transition: left 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+            z-index: 10;
+        }
+
+        /* Score Board */
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px 25px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-label {
+            color: #aaa;
+            font-size: 0.8em;
+            margin-bottom: 3px;
+        }
+
+        .score-value {
+            color: #fff;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .score-value.student {
+            color: #4ecdc4;
+        }
+
+        .score-value.computer {
+            color: #ff6b6b;
+        }
+
+        .question-counter {
+            color: #ffd700;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        /* Question Area */
+        .question-area {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .question-text {
+            color: #fff;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .question-number {
+            display: inline-block;
+            background: #ffd700;
+            color: #1a1a2e;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .option-btn {
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .option-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #4ecdc4;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.2);
+        }
+
+        .option-btn.correct {
+            background: rgba(78, 205, 196, 0.3);
+            border-color: #4ecdc4;
+            animation: pulse-correct 0.5s ease;
+        }
+
+        .option-btn.wrong {
+            background: rgba(255, 107, 107, 0.3);
+            border-color: #ff6b6b;
+            animation: pulse-wrong 0.5s ease;
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        @keyframes pulse-correct {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes pulse-wrong {
+            0%, 25%, 75%, 100% { transform: translateX(0); }
+            12.5% { transform: translateX(-5px); }
+            37.5% { transform: translateX(5px); }
+            62.5% { transform: translateX(-5px); }
+            87.5% { transform: translateX(5px); }
+        }
+
+        /* Feedback */
+        .feedback {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 1.1em;
+            display: none;
+        }
+
+        .feedback.correct {
+            display: block;
+            background: rgba(78, 205, 196, 0.2);
+            color: #4ecdc4;
+            border: 1px solid #4ecdc4;
+        }
+
+        .feedback.wrong {
+            display: block;
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+            border: 1px solid #ff6b6b;
+        }
+
+        /* Next Button */
+        .next-btn {
+            display: none;
+            margin: 20px auto 0;
+            padding: 12px 35px;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            color: #1a1a2e;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .next-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        /* Result Screen */
+        .result-screen {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .result-screen h2 {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        .result-screen.win h2 {
+            color: #4ecdc4;
+            text-shadow: 0 0 30px rgba(78, 205, 196, 0.5);
+        }
+
+        .result-screen.lose h2 {
+            color: #ff6b6b;
+            text-shadow: 0 0 30px rgba(255, 107, 107, 0.5);
+        }
+
+        .result-screen.draw h2 {
+            color: #ffd700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+
+        .result-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+        }
+
+        .result-message {
+            color: #ccc;
+            font-size: 1.1em;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .restart-btn {
+            padding: 14px 40px;
+            background: linear-gradient(135deg, #4ecdc4, #2eb5ad);
+            color: #fff;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(78, 205, 196, 0.4);
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ecdc4, #ffd700);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            top: -10px;
+            font-size: 1.5em;
+            animation: fall 3s linear infinite;
+            z-index: 1000;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Start Screen */
+        .start-screen {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .start-screen h1 {
+            color: #fff;
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .start-screen p {
+            color: #aaa;
+            margin-bottom: 8px;
+            font-size: 1em;
+            line-height: 1.6;
+        }
+
+        .start-btn {
+            margin-top: 25px;
+            padding: 16px 50px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(255, 107, 107, 0.3); }
+            to { box-shadow: 0 0 30px rgba(255, 107, 107, 0.6); }
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        .rules-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 500px;
+            text-align: left;
+        }
+
+        .rules-box h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .rules-box li {
+            color: #ccc;
+            margin-bottom: 8px;
+            margin-left: 20px;
+            font-size: 0.9em;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 15px;
+            }
+            .game-title {
+                font-size: 1.4em;
+            }
+            .options {
+                grid-template-columns: 1fr;
+            }
+            .arena {
+                height: 140px;
+            }
+            .team-icon {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Start Screen -->
+        <div class="start-screen" id="startScreen">
+            <h1>🏋️ Tug of War 🏋️</h1>
+            <p style="color: #ffd700; font-size: 1.2em; font-weight: bold;">Descriptive Text Challenge</p>
+            <p>SMK Kelas 10 - English Subject</p>
+            
+            <div class="rules-box">
+                <h3>📋 How to Play</h3>
+                <ul>
+                    <li>You are the <strong style="color: #4ecdc4;">Left Team (Student)</strong> 🧑‍🎓</li>
+                    <li>The computer is the <strong style="color: #ff6b6b;">Right Team</strong> 🤖</li>
+                    <li>Answer <strong>5 questions</strong> about Descriptive Text</li>
+                    <li>✅ Correct answer → Rope moves to YOUR side (left)</li>
+                    <li>❌ Wrong answer → Rope moves to COMPUTER's side (right)</li>
+                    <li>🏆 Answer ALL correctly to WIN the tug of war!</li>
+                </ul>
+            </div>
+
+            <button class="start-btn" onclick="startGame()">🎮 START GAME</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" style="display: none;">
+            <h1 class="game-title">🏋️ Tug of War - Descriptive Text</h1>
+            <p class="game-subtitle">Pull the rope by answering correctly!</p>
+
+            <!-- Arena -->
+            <div class="arena">
+                <div class="mud-pit"></div>
+                <div class="rope-container">
+                    <div class="rope"></div>
+                    <div class="rope-marker" id="ropeMarker"></div>
+                </div>
+                <div class="team team-left" id="teamLeft">
+                    <div class="team-icon">🧑‍🎓</div>
+                    <div class="team-name">STUDENT</div>
+                    <div class="team-score" id="studentScore">0</div>
+                </div>
+                <div class="team team-right" id="teamRight">
+                    <div class="team-icon">🤖</div>
+                    <div class="team-name">COMPUTER</div>
+                    <div class="team-score" id="computerScore">0</div>
+                </div>
+                <span class="arena-label left">← STUDENT SIDE</span>
+                <span class="arena-label right">COMPUTER SIDE →</span>
+            </div>
+
+            <!-- Scoreboard -->
+            <div class="scoreboard">
+                <div class="score-item">
+                    <div class="score-label">Student</div>
+                    <div class="score-value student" id="scoreLeft">0</div>
+                </div>
+                <div class="score-item">
+                    <div class="question-counter" id="questionCounter">Question 1 / 5</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">Computer</div>
+                    <div class="score-value computer" id="scoreRight">0</div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+
+            <!-- Question Area -->
+            <div class="question-area" id="questionArea">
+                <div class="question-text" id="questionText"></div>
+                <div class="options" id="optionsContainer"></div>
+                <div class="feedback" id="feedback"></div>
+            </div>
+
+            <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Next Question →</button>
+        </div>
+
+        <!-- Result Screen -->
+        <div class="result-screen" id="resultScreen">
+            <div class="result-icon" id="resultIcon"></div>
+            <h2 id="resultTitle"></h2>
+            <p class="result-message" id="resultMessage"></p>
+            <button class="restart-btn" onclick="restartGame()">🔄 Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Questions about Descriptive Text
+        const questions = [
+            {
+                question: "What is the main purpose of a descriptive text?",
+                options: [
+                    "A. To tell a story with complications",
+                    "B. To describe a particular person, place, or thing in detail",
+                    "C. To explain how something works",
+                    "D. To persuade the reader to do something"
+                ],
+                correct: 1,
+                explanation: "Descriptive text aims to describe a particular person, place, or thing in detail."
+            },
+            {
+                question: "What is the generic structure of a descriptive text?",
+                options: [
+                    "A. Orientation - Complication - Resolution",
+                    "B. General Classification - Description",
+                    "C. Identification - Description",
+                    "D. Goal - Materials - Steps"
+                ],
+                correct: 2,
+                explanation: "The generic structure of descriptive text is Identification (introducing the subject) and Description (describing characteristics)."
+            },
+            {
+                question: "Which tense is mostly used in descriptive text?",
+                options: [
+                    "A. Simple Future Tense",
+                    "B. Present Continuous Tense",
+                    "C. Simple Present Tense",
+                    "D. Past Perfect Tense"
+                ],
+                correct: 2,
+                explanation: "Descriptive text mostly uses Simple Present Tense because it describes facts and general characteristics."
+            },
+            {
+                question: "Read the following sentence:\n\n\"My cat has soft white fur and bright green eyes. It loves to sleep on the sofa.\"\n\nWhat type of words are 'soft', 'white', 'bright', and 'green'?",
+                options: [
+                    "A. Verbs",
+                    "B. Nouns",
+                    "C. Adjectives",
+                    "D. Adverbs"
+                ],
+                correct: 2,
+                explanation: "These are adjectives — words that describe the qualities or characteristics of nouns, commonly used in descriptive text."
+            },
+            {
+                question: "Which of the following is an example of a descriptive text?",
+                options: [
+                    "A. A news report about a flood",
+                    "B. A text that describes 'My Beloved Grandmother' with her physical appearance and characteristics",
+                    "C. A procedure text about how to make fried rice",
+                    "D. A narrative text about Cinderella"
+                ],
+                correct: 1,
+                explanation: "A text describing 'My Beloved Grandmother' with her physical appearance and characteristics is a descriptive text because it describes a specific person in detail."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let studentScore = 0;
+        let computerScore = 0;
+        let ropePosition = 50; // percentage from left
+
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            currentQuestion = 0;
+            studentScore = 0;
+            computerScore = 0;
+            ropePosition = 50;
+            updateDisplay();
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const q = questions[currentQuestion];
+            document.getElementById('questionText').innerHTML = 
+                `<span class="question-number">${currentQuestion + 1}</span> ${q.question}`;
+            
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+            
+            q.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = option;
+                btn.onclick = () => selectAnswer(index);
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('feedback').className = 'feedback';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('questionCounter').textContent = `Question ${currentQuestion + 1} / 5`;
+            document.getElementById('progressFill').style.width = `${(currentQuestion / 5) * 100}%`;
+        }
+
+        function selectAnswer(selectedIndex) {
+            const q = questions[currentQuestion];
+            const buttons = document.querySelectorAll('.option-btn');
+            
+            // Disable all buttons
+            buttons.forEach(btn => btn.disabled = true);
+
+            const feedback = document.getElementById('feedback');
+
+            if (selectedIndex === q.correct) {
+                // Correct answer - student wins this round
+                buttons[selectedIndex].classList.add('correct');
+                studentScore++;
+                ropePosition = Math.max(15, ropePosition - 10); // Move rope left
+                feedback.className = 'feedback correct';
+                feedback.innerHTML = `✅ <strong>Correct!</strong> ${q.explanation}<br>🎉 The rope moves to YOUR side!`;
+            } else {
+                // Wrong answer - computer wins this round
+                buttons[selectedIndex].classList.add('wrong');
+                buttons[q.correct].classList.add('correct');
+                computerScore++;
+                ropePosition = Math.min(85, ropePosition + 10); // Move rope right
+                feedback.className = 'feedback wrong';
+                feedback.innerHTML = `❌ <strong>Wrong!</strong> ${q.explanation}<br>💪 The rope moves to COMPUTER's side!`;
+            }
+
+            feedback.style.display = 'block';
+            updateDisplay();
+
+            // Show next button or end game
+            if (currentQuestion < 4) {
+                document.getElementById('nextBtn').style.display = 'block';
+            } else {
+                setTimeout(showResult, 2000);
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            loadQuestion();
+        }
+
+        function updateDisplay() {
+            document.getElementById('scoreLeft').textContent = studentScore;
+            document.getElementById('scoreRight').textContent = computerScore;
+            document.getElementById('studentScore').textContent = studentScore;
+            document.getElementById('computerScore').textContent = computerScore;
+
+            // Move rope marker
+            const marker = document.getElementById('ropeMarker');
+            marker.style.left = `${ropePosition}%`;
+
+            // Move teams based on rope position
+            const teamLeft = document.getElementById('teamLeft');
+            const teamRight = document.getElementById('teamRight');
+            
+            // Calculate team positions based on rope
+            const leftOffset = (ropePosition - 50) * 0.5; // How much left team moved
+            teamLeft.style.left = `${15 + leftOffset}%`;
+            teamRight.style.right = `${15 - leftOffset}%`;
+        }
+
+        function showResult() {
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('resultScreen').style.display = 'block';
+            document.getElementById('progressFill').style.width = '100%';
+
+            const resultIcon = document.getElementById('resultIcon');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultMessage = document.getElementById('resultMessage');
+
+            if (studentScore === 5) {
+                // Perfect win!
+                resultIcon.textContent = '🏆';
+                resultTitle.textContent = 'YOU WIN! PERFECT SCORE!';
+                resultTitle.parentElement.className = 'result-screen win';
+                resultMessage.innerHTML = `
+                    Congratulations! 🎉<br>
+                    You answered all 5 questions correctly!<br>
+                    You pulled the rope all the way to your side!<br><br>
+                    <strong>Final Score: Student ${studentScore} - ${computerScore} Computer</strong><br><br>
+                    You have mastered Descriptive Text! 🌟
+                `;
+                createConfetti();
+            } else if (studentScore > computerScore) {
+                resultIcon.textContent = '🎊';
+                resultTitle.textContent = 'YOU WIN!';
+                resultTitle.parentElement.className = 'result-screen win';
+                resultMessage.innerHTML = `
+                    Great job! You pulled the rope to your side!<br><br>
+                    <strong>Final Score: Student ${studentScore} - ${computerScore} Computer</strong><br><br>
+                    Keep studying to get even better! 💪
+                `;
+                createConfetti();
+            } else if (studentScore < computerScore) {
+                resultIcon.textContent = '😔';
+                resultTitle.textContent = 'COMPUTER WINS!';
+                resultTitle.parentElement.className = 'result-screen lose';
+                resultMessage.innerHTML = `
+                    Don't give up! The computer pulled the rope to its side.<br><br>
+                    <strong>Final Score: Student ${studentScore} - ${computerScore} Computer</strong><br><br>
+                    Review the material and try again! You can do it! 📚
+                `;
+            } else {
+                resultIcon.textContent = '🤝';
+                resultTitle.textContent = "IT'S A DRAW!";
+                resultTitle.parentElement.className = 'result-screen draw';
+                resultMessage.innerHTML = `
+                    Both teams are equally strong!<br><br>
+                    <strong>Final Score: Student ${studentScore} - ${computerScore} Computer</strong><br><br>
+                    Try again to win the tug of war! 🎯
+                `;
+            }
+        }
+
+        function createConfetti() {
+            const emojis = ['🎉', '⭐', '🌟', '✨', '🎊', '💫', '🏆'];
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 4000);
+                }, i * 100);
+            }
+        }
+
+        function restartGame() {
+            document.getElementById('resultScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'block';
+            // Reset rope
+            ropePosition = 50;
+            document.getElementById('ropeMarker').style.left = '50%';
+            document.getElementById('teamLeft').style.left = '15%';
+            document.getElementById('teamRight').style.right = '15%';
+        }
+    </script>
+</body>
+</html>
