@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maze Quest - Descriptive Text Adventure</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+        background: radial-gradient(ellipse at center, #1a1a3e 0%, #0a0a1e 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        color: #fff;
+    }
+
+    .game-wrapper {
+        position: relative;
+        width: 95vw;
+        max-width: 900px;
+    }
+
+    .game-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 12px 12px 0 0;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: none;
+    }
+
+    .game-title {
+        font-size: 1.3em;
+        color: #ffd700;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+
+    .stats {
+        display: flex;
+        gap: 20px;
+        font-size: 0.95em;
+    }
+
+    .stat {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .stat-label { color: #aaa; }
+    .stat-value { color: #4ecdc4; font-weight: bold; }
+    .stat-value.lives { color: #ff6b6b; }
+
+    canvas {
+        display: block;
+        background: #0a0a1e;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0 0 12px 12px;
+        width: 100%;
+        height: auto;
+    }
+
+    .question-panel {
+        position: absolute;
+        top: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(10px);
+        border: 2px solid #ffd700;
+        border-radius: 12px;
+        padding: 15px 25px;
+        max-width: 80%;
+        text-align: center;
+        z-index: 10;
+        box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+
+    .question-number {
+        display: inline-block;
+        background: #ffd700;
+        color: #1a1a2e;
+        padding: 2px 12px;
+        border-radius: 12px;
+        font-weight: bold;
+        font-size: 0.85em;
+        margin-bottom: 8px;
+    }
+
+    .question-text {
+        font-size: 1em;
+        line-height: 1.5;
+        color: #fff;
+    }
+
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(10px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+    }
+
+    .overlay h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        background: linear-gradient(135deg, #ffd700, #ff6b6b);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .overlay p {
+        color: #ccc;
+        margin-bottom: 15px;
+        line-height: 1.6;
+        max-width: 500px;
+    }
+
+    .btn {
+        margin-top: 20px;
+        padding: 14px 40px;
+        font-size: 1.1em;
+        font-weight: bold;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #4ecdc4, #2eb5ad);
+        color: #fff;
+        box-shadow: 0 5px 20px rgba(78, 205, 196, 0.4);
+    }
+
+    .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 30px rgba(78, 205, 196, 0.6);
+    }
+
+    .btn.danger {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
+    }
+
+    .controls-info {
+        margin-top: 20px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .controls-info h3 {
+        color: #ffd700;
+        margin-bottom: 8px;
+    }
+
+    .key {
+        display: inline-block;
+        background: #333;
+        color: #fff;
+        padding: 4px 10px;
+        border-radius: 5px;
+        margin: 0 3px;
+        font-family: monospace;
+        border: 1px solid #555;
+        box-shadow: 0 2px 0 #222;
+    }
+
+    .hidden { display: none !important; }
+
+    .feedback-popup {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 4em;
+        font-weight: bold;
+        pointer-events: none;
+        z-index: 50;
+        animation: popIn 1s ease-out forwards;
+    }
+
+    @keyframes popIn {
+        0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        30% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+        100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+    }
+
+    .mobile-controls {
+        display: none;
+        margin-top: 15px;
+        gap: 5px;
+        justify-content: center;
+    }
+
+    .mobile-btn {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        color: #fff;
+        font-size: 1.5em;
+        cursor: pointer;
+        user-select: none;
+        touch-action: manipulation;
+    }
+
+    .mobile-btn:active {
+        background: rgba(78, 205, 196, 0.3);
+        border-color: #4ecdc4;
+    }
+
+    @media (max-width: 768px) {
+        .mobile-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(2, 60px);
+        }
+        .game-title { font-size: 1em; }
+        .stats { gap: 10px; font-size: 0.8em; }
+        .question-panel { font-size: 0.9em; padding: 10px 15px; }
+    }
+</style>
+</head>
+<body>
+<div class="game-wrapper">
+    <div class="game-header">
+        <div class="game-title">🏰 MAZE QUEST</div>
+        <div class="stats">
+            <div class="stat">
+                <span class="stat-label">Question:</span>
+                <span class="stat-value" id="questionStat">1/5</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Score:</span>
+                <span class="stat-value" id="scoreStat">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Lives:</span>
+                <span class="stat-value lives" id="livesStat">❤❤❤</span>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" width="900" height="600"></canvas>
+
+    <div class="question-panel" id="questionPanel">
+        <div class="question-number" id="questionNumber">Question 1</div>
+        <div class="question-text" id="questionText">Loading...</div>
+    </div>
+
+    <!-- Start Screen -->
+    <div class="overlay" id="startScreen">
+        <h1>🏰 MAZE QUEST</h1>
+        <p style="color: #ffd700; font-weight: bold;">Descriptive Text Adventure</p>
+        <p>Navigate through the maze, reach the correct answer zone, and avoid the monsters!</p>
+        <div class="controls-info">
+            <h3>🎮 Controls</h3>
+            <p>Move with <span class="key">↑</span><span class="key">↓</span><span class="key">←</span><span class="key">→</span> or <span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span></p>
+            <p style="margin-top: 8px; font-size: 0.9em; color: #aaa;">
+                🟢 Green Zone = Correct Answer<br>
+                🔴 Red Zone = Wrong Answer<br>
+                👾 Avoid Monsters!
+            </p>
+        </div>
+        <button class="btn" onclick="startGame()">▶ START ADVENTURE</button>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div class="overlay hidden" id="gameOverScreen">
+        <h1 id="endTitle">GAME OVER</h1>
+        <p id="endMessage">The monsters got you!</p>
+        <p id="endStats"></p>
+        <button class="btn danger" onclick="restartGame()">🔄 PLAY AGAIN</button>
+    </div>
+
+    <!-- Mobile Controls -->
+    <div class="mobile-controls">
+        <div></div>
+        <button class="mobile-btn" data-dir="up">↑</button>
+        <div></div>
+        <button class="mobile-btn" data-dir="left">←</button>
+        <button class="mobile-btn" data-dir="down">↓</button>
+        <button class="mobile-btn" data-dir="right">→</button>
+    </div>
+</div>
+
+<script>
+// ============ AUDIO SYSTEM (Web Audio API) ============
+let audioCtx = null;
+let musicInterval = null;
+let musicGain = null;
+let sfxEnabled = true;
+
+function initAudio() {
+    if (audioCtx) return;
+    try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        musicGain = audioCtx.createGain();
+        musicGain.gain.value = 0.08;
+        musicGain.connect(audioCtx.destination);
+    } catch (e) {
+        console.log('Audio not supported');
+    }
+}
+
+function playNote(freq, duration, type = 'sine', volume = 0.3, delay = 0) {
+    if (!audioCtx || !sfxEnabled) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, audioCtx.currentTime + delay);
+    gain.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + delay + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime + delay);
+    osc.stop(audioCtx.currentTime + delay + duration);
+}
+
+function playCorrectSound() {
+    // Ascending cheerful notes
+    playNote(523.25, 0.15, 'sine', 0.3, 0);    // C5
+    playNote(659.25, 0.15, 'sine', 0.3, 0.1);  // E5
+    playNote(783.99, 0.15, 'sine', 0.3, 0.2);  // G5
+    playNote(1046.5, 0.3, 'sine', 0.35, 0.3);  // C6
+}
+
+function playWrongSound() {
+    // Descending sad notes
+    playNote(400, 0.2, 'sawtooth', 0.2, 0);
+    playNote(300, 0.2, 'sawtooth', 0.2, 0.15);
+    playNote(200, 0.4, 'sawtooth', 0.25, 0.3);
+}
+
+function playBombSound() {
+    if (!audioCtx || !sfxEnabled) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.5);
+    gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.5);
+}
+
+function playFireworkSound() {
+    if (!audioCtx || !sfxEnabled) return;
+    for (let i = 0; i < 8; i++) {
+        setTimeout(() => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = 1000 + Math.random() * 2000;
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }, i * 50);
+    }
+}
+
+function playMonsterHitSound() {
+    playNote(150, 0.3, 'square', 0.3, 0);
+    playNote(100, 0.3, 'square', 0.3, 0.15);
+}
+
+// Background music - simple melody loop
+function startBackgroundMusic() {
+    if (!audioCtx) return;
+    const melody = [
+        { note: 261.63, dur: 0.3 }, // C4
+        { note: 329.63, dur: 0.3 }, // E4
+        { note: 392.00, dur: 0.3 }, // G4
+        { note: 329.63, dur: 0.3 }, // E4
+        { note: 349.23, dur: 0.3 }, // F4
+        { note: 392.00, dur: 0.3 }, // G4
+        { note: 440.00, dur: 0.6 }, // A4
+        { note: 392.00, dur: 0.3 }, // G4
+        { note: 329.63, dur: 0.3 }, // E4
+        { note: 293.66, dur: 0.3 }, // D4
+        { note: 261.63, dur: 0.6 }, // C4
+    ];
+    
+    let noteIndex = 0;
+    let time = audioCtx.currentTime + 0.1;
+    
+    function scheduleNotes() {
+        while (time < audioCtx.currentTime + 2) {
+            const note = melody[noteIndex % melody.length];
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = note.note;
+            gain.gain.setValueAtTime(0, time);
+            gain.gain.linearRampToValueAtTime(0.08, time + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + note.dur);
+            osc.connect(gain);
+            gain.connect(musicGain);
+            osc.start(time);
+            osc.stop(time + note.dur);
+            time += note.dur;
+            noteIndex++;
+        }
+    }
+    
+    scheduleNotes();
+    musicInterval = setInterval(scheduleNotes, 1000);
+}
+
+function stopBackgroundMusic() {
+    if (musicInterval) {
+        clearInterval(musicInterval);
+        musicInterval = null;
+    }
+}
+
+// ============ GAME DATA ============
+const questions = [
+    {
+        question: "What is the main purpose of a descriptive text?",
+        options: [
+            "To tell a story with complications",
+            "To describe a particular person, place, or thing in detail",
+            "To explain how something works step by step",
+            "To persuade the reader to do something"
+        ],
+        correct: 1
+    },
+    {
+        question: "What is the generic structure of a descriptive text?",
+        options: [
+            "Orientation - Complication - Resolution",
+            "Goal - Materials - Steps",
+            "Identification - Description",
+            "General Classification - Description"
+        ],
+        correct: 2
+    },
+    {
+        question: "Which tense is mostly used in descriptive text?",
+        options: [
+            "Simple Past Tense",
+            "Present Continuous Tense",
+            "Simple Future Tense",
+            "Simple Present Tense"
+        ],
+        correct: 3
+    },
+    {
+        question: "\"My cat has soft white fur and bright green eyes.\" What type of words are 'soft', 'white', 'bright', and 'green'?",
+        options: [
+            "Verbs",
+            "Adverbs",
+            "Adjectives",
+            "Nouns"
+        ],
+        correct: 2
+    },
+    {
+        question: "Which of the following is an example of a descriptive text?",
+        options: [
+            "A procedure text about making fried rice",
+            "A text describing 'My Beloved Grandmother' with her appearance and characteristics",
+            "A narrative text about Cinderella",
+            "A news report about a flood"
+        ],
+        correct: 1
+    }
+];
+
+// ============ GAME STATE ============
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const GAME_W = 900;
+const GAME_H = 600;
+
+let gameState = {
+    running: false,
+    currentQuestion: 0,
+    score: 0,
+    lives: 3,
+    player: { x: GAME_W / 2, y: GAME_H / 2, size: 18, speed: 3.5, invulnerable: 0 },
+    monsters: [],
+    answerZones: [],
+    walls: [],
+    particles: [],
+    keys: {},
+    wrongZones: new Set(),
+    correctZone: -1,
+    questionSolved: false,
+    transitioning: false,
+    shakeTime: 0
+};
+
+// ============ MAZE LAYOUT ============
+function createMaze() {
+    const walls = [];
+    const wallThickness = 12;
+    
+    // Border walls
+    walls.push({ x: 0, y: 0, w: GAME_W, h: wallThickness });
+    walls.push({ x: 0, y: GAME_H - wallThickness, w: GAME_W, h: wallThickness });
+    walls.push({ x: 0, y: 0, w: wallThickness, h: GAME_H });
+    walls.push({ x: GAME_W - wallThickness, y: 0, w: wallThickness, h: GAME_H });
+    
+    // Internal maze walls - create corridors
+    // Horizontal walls
+    walls.push({ x: 150, y: 150, w: 200, h: wallThickness });
+    walls.push({ x: 550, y: 150, w: 200, h: wallThickness });
+    walls.push({ x: 200, y: 440, w: 200, h: wallThickness });
+    walls.push({ x: 500, y: 440, w: 200, h: wallThickness });
+    
+    // Vertical walls
+    walls.push({ x: 150, y: 200, w: wallThickness, h: 150 });
+    walls.push({ x: 738, y: 200, w: wallThickness, h: 150 });
+    walls.push({ x: 400, y: 250, w: wallThickness, h: 100 });
+    walls.push({ x: 488, y: 250, w: wallThickness, h: 100 });
+    
+    return walls;
+}
+
+// ============ ANSWER ZONES ============
+function createAnswerZones(questionIndex) {
+    const q = questions[questionIndex];
+    const zones = [];
+    const zoneSize = 110;
+    const positions = [
+        { x: 40, y: 40, label: 'A' },           // Top-left
+        { x: GAME_W - 40 - zoneSize, y: 40, label: 'B' },  // Top-right
+        { x: 40, y: GAME_H - 40 - zoneSize, label: 'C' },  // Bottom-left
+        { x: GAME_W - 40 - zoneSize, y: GAME_H - 40 - zoneSize, label: 'D' }  // Bottom-right
+    ];
+    
+    for (let i = 0; i < 4; i++) {
+        zones.push({
+            x: positions[i].x,
+            y: positions[i].y,
+            w: zoneSize,
+            h: zoneSize,
+            label: positions[i].label,
+            optionIndex: i,
+            text: q.options[i],
+            isCorrect: i === q.correct,
+            state: 'active', // active, correct, wrong
+            pulse: 0
+        });
+    }
+    
+    return zones;
+}
+
+// ============ MONSTERS ============
+function spawnMonster() {
+    const side = Math.floor(Math.random() * 4);
+    let x, y;
+    const margin = 50;
+    
+    switch (side) {
+        case 0: x = margin + Math.random() * (GAME_W - 2 * margin); y = margin; break;
+        case 1: x = GAME_W - margin; y = margin + Math.random() * (GAME_H - 2 * margin); break;
+        case 2: x = margin + Math.random() * (GAME_W - 2 * margin); y = GAME_H - margin; break;
+        case 3: x = margin; y = margin + Math.random() * (GAME_H - 2 * margin); break;
+    }
+    
+    return {
+        x, y,
+        size: 20,
+        speed: 1.2 + Math.random() * 0.8,
+        vx: (Math.random() - 0.5) * 2,
+        vy: (Math.random() - 0.5) * 2,
+        directionChangeTimer: 0,
+        color: `hsl(${Math.random() * 60 + 280}, 70%, 50%)`,
+        eyeOffset: Math.random() * Math.PI * 2
+    };
+}
+
+// ============ COLLISION ============
+function rectCollision(ax, ay, aw, ah, bx, by, bw, bh) {
+    return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+}
+
+function circleRectCollision(cx, cy, cr, rx, ry, rw, rh) {
+    const closestX = Math.max(rx, Math.min(cx, rx + rw));
+    const closestY = Math.max(ry, Math.min(cy, ry + rh));
+    const dx = cx - closestX;
+    const dy = cy - closestY;
+    return (dx * dx + dy * dy) < (cr * cr);
+}
+
+function checkWallCollision(x, y, size) {
+    for (const wall of gameState.walls) {
+        if (circleRectCollision(x, y, size, wall.x, wall.y, wall.w, wall.h)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// ============ PARTICLES ============
+function createFirework(x, y) {
+    const colors = ['#ffd700', '#ff6b6b', '#4ecdc4', '#ff69b4', '#00ff88'];
+    for (let i = 0; i < 60; i++) {
+        const angle = (Math.PI * 2 * i) / 60 + Math.random() * 0.3;
+        const speed = 2 + Math.random() * 5;
+        gameState.particles.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 60 + Math.random() * 30,
+            maxLife: 90,
+            size: 2 + Math.random() * 3,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            type: 'firework'
+        });
+    }
+}
+
+function createBomb(x, y) {
+    for (let i = 0; i < 40; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 1 + Math.random() * 4;
+        gameState.particles.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 40 + Math.random() * 20,
+            maxLife: 60,
+            size: 3 + Math.random() * 4,
+            color: Math.random() > 0.5 ? '#ff4500' : '#ff8c00',
+            type: 'bomb'
+        });
+    }
+    // Smoke
+    for (let i = 0; i < 15; i++) {
+        gameState.particles.push({
+            x: x + (Math.random() - 0.5) * 30,
+            y: y + (Math.random() - 0.5) * 30,
+            vx: (Math.random() - 0.5) * 1,
+            vy: -Math.random() * 1.5,
+            life: 60,
+            maxLife: 60,
+            size: 8 + Math.random() * 6,
+            color: '#555',
+            type: 'smoke'
+        });
+    }
+}
+
+function createCheckmark(x, y) {
+    gameState.particles.push({
+        x, y,
+        vx: 0, vy: 0,
+        life: 60,
+        maxLife: 60,
+        type: 'checkmark'
+    });
+}
+
+function createXMark(x, y) {
+    gameState.particles.push({
+        x, y,
+        vx: 0, vy: 0,
+        life: 60,
+        maxLife: 60,
+        type: 'xmark'
+    });
+}
+
+// ============ UPDATE ============
+function update() {
+    if (!gameState.running) return;
+    
+    const p = gameState.player;
+    
+    // Player movement
+    let dx = 0, dy = 0;
+    if (gameState.keys['ArrowUp'] || gameState.keys['w'] || gameState.keys['W']) dy -= 1;
+    if (gameState.keys['ArrowDown'] || gameState.keys['s'] || gameState.keys['S']) dy += 1;
+    if (gameState.keys['ArrowLeft'] || gameState.keys['a'] || gameState.keys['A']) dx -= 1;
+    if (gameState.keys['ArrowRight'] || gameState.keys['d'] || gameState.keys['D']) dx += 1;
+    
+    // Normalize diagonal movement
+    if (dx !== 0 && dy !== 0) {
+        dx *= 0.707;
+        dy *= 0.707;
+    }
+    
+    const newX = p.x + dx * p.speed;
+    const newY = p.y + dy * p.speed;
+    
+    // Check wall collisions separately for X and Y (allow sliding)
+    if (!checkWallCollision(newX, p.y, p.size)) p.x = newX;
+    if (!checkWallCollision(p.x, newY, p.size)) p.y = newY;
+    
+    // Keep in bounds
+    p.x = Math.max(p.size, Math.min(GAME_W - p.size, p.x));
+    p.y = Math.max(p.size, Math.min(GAME_H - p.size, p.y));
+    
+    // Invulnerability timer
+    if (p.invulnerable > 0) p.invulnerable--;
+    
+    // Update monsters
+    for (const m of gameState.monsters) {
+        m.directionChangeTimer--;
+        
+        // Random direction changes
+        if (m.directionChangeTimer <= 0) {
+            // Sometimes chase player, sometimes random
+            if (Math.random() < 0.4) {
+                const angleToPlayer = Math.atan2(p.y - m.y, p.x - m.x);
+                m.vx = Math.cos(angleToPlayer) * m.speed;
+                m.vy = Math.sin(angleToPlayer) * m.speed;
+            } else {
+                const angle = Math.random() * Math.PI * 2;
+                m.vx = Math.cos(angle) * m.speed;
+                m.vy = Math.sin(angle) * m.speed;
+            }
+            m.directionChangeTimer = 60 + Math.random() * 120;
+        }
+        
+        const newMX = m.x + m.vx;
+        const newMY = m.y + m.vy;
+        
+        if (!checkWallCollision(newMX, m.y, m.size)) {
+            m.x = newMX;
+        } else {
+            m.vx = -m.vx;
+        }
+        
+        if (!checkWallCollision(m.x, newMY, m.size)) {
+            m.y = newMY;
+        } else {
+            m.vy = -m.vy;
+        }
+        
+        // Bounce off walls
+        if (m.x < m.size || m.x > GAME_W - m.size) m.vx = -m.vx;
+        if (m.y < m.size || m.y > GAME_H - m.size) m.vy = -m.vy;
+        
+        // Collision with player
+        if (p.invulnerable <= 0) {
+            const ddx = p.x - m.x;
+            const ddy = p.y - m.y;
+            const dist = Math.sqrt(ddx * ddx + ddy * ddy);
+            if (dist < p.size + m.size) {
+                // Hit by monster
+                gameState.lives--;
+                p.invulnerable = 90;
+                gameState.shakeTime = 20;
+                playMonsterHitSound();
+                updateStats();
+                
+                if (gameState.lives <= 0) {
+                    endGame(false);
+                    return;
+                }
+            }
+        }
+    }
+    
+    // Spawn more monsters over time
+    if (gameState.monsters.length < 3 + gameState.currentQuestion && Math.random() < 0.005) {
+        gameState.monsters.push(spawnMonster());
+    }
+    
+    // Check answer zones
+    if (!gameState.questionSolved) {
+        for (const zone of gameState.answerZones) {
+            if (zone.state !== 'active') continue;
+            if (circleRectCollision(p.x, p.y, p.size, zone.x, zone.y, zone.w, zone.h)) {
+                if (zone.isCorrect) {
+                    // Correct answer!
+                    zone.state = 'correct';
+                    gameState.questionSolved = true;
+                    gameState.score += 100;
+                    gameState.correctZone = zone.optionIndex;
+                    createFirework(zone.x + zone.w / 2, zone.y + zone.h / 2);
+                    createCheckmark(zone.x + zone.w / 2, zone.y + zone.h / 2);
+                    playCorrectSound();
+                    playFireworkSound();
+                    updateStats();
+                    
+                    // Transition to next question
+                    setTimeout(() => {
+                        if (gameState.currentQuestion < questions.length - 1) {
+                            nextQuestion();
+                        } else {
+                            endGame(true);
+                        }
+                    }, 2000);
+                } else {
+                    // Wrong answer
+                    zone.state = 'wrong';
+                    gameState.wrongZones.add(zone.optionIndex);
+                    createBomb(zone.x + zone.w / 2, zone.y + zone.h / 2);
+                    createXMark(zone.x + zone.w / 2, zone.y + zone.h / 2);
+                    playWrongSound();
+                    playBombSound();
+                    gameState.shakeTime = 15;
+                }
+                break;
+            }
+        }
+    }
+    
+    // Update particles
+    for (let i = gameState.particles.length - 1; i >= 0; i--) {
+        const part = gameState.particles[i];
+        part.x += part.vx;
+        part.y += part.vy;
+        part.life--;
+        
+        if (part.type === 'firework') {
+            part.vy += 0.1; // gravity
+            part.vx *= 0.98;
+        } else if (part.type === 'bomb') {
+            part.vx *= 0.95;
+            part.vy *= 0.95;
+        }
+        
+        if (part.life <= 0) {
+            gameState.particles.splice(i, 1);
+        }
+    }
+    
+    // Shake decay
+    if (gameState.shakeTime > 0) gameState.shakeTime--;
+    
+    // Pulse zones
+    for (const zone of gameState.answerZones) {
+        zone.pulse = (zone.pulse + 0.05) % (Math.PI * 2);
+    }
+}
+
+// ============ RENDER ============
+function render() {
+    ctx.save();
+    
+    // Screen shake
+    if (gameState.shakeTime > 0) {
+        const intensity = gameState.shakeTime * 0.5;
+        ctx.translate(
+            (Math.random() - 0.5) * intensity,
+            (Math.random() - 0.5) * intensity
+        );
+    }
+    
+    // Background
+    const gradient = ctx.createRadialGradient(GAME_W/2, GAME_H/2, 100, GAME_W/2, GAME_H/2, 600);
+    gradient.addColorStop(0, '#1a1a3e');
+    gradient.addColorStop(1, '#0a0a1e');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, GAME_W, GAME_H);
+    
+    // Grid pattern
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < GAME_W; x += 30) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, GAME_H);
+        ctx.stroke();
+    }
+    for (let y = 0; y < GAME_H; y += 30) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(GAME_W, y);
+        ctx.stroke();
+    }
+    
+    // Walls
+    for (const wall of gameState.walls) {
+        const wallGrad = ctx.createLinearGradient(wall.x, wall.y, wall.x + wall.w, wall.y + wall.h);
+        wallGrad.addColorStop(0, '#4a4a6e');
+        wallGrad.addColorStop(1, '#2a2a4e');
+        ctx.fillStyle = wallGrad;
+        ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
+        
+        // Wall highlight
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(wall.x, wall.y, wall.w, wall.h);
+    }
+    
+    // Answer zones
+    for (const zone of gameState.answerZones) {
+        let bgColor, borderColor, glowColor;
+        
+        if (zone.state === 'correct') {
+            bgColor = 'rgba(78, 205, 196, 0.3)';
+            borderColor = '#4ecdc4';
+            glowColor = 'rgba(78, 205, 196, 0.6)';
+        } else if (zone.state === 'wrong') {
+            bgColor = 'rgba(255, 107, 107, 0.2)';
+            borderColor = '#666';
+            glowColor = 'rgba(255, 107, 107, 0.3)';
+        } else {
+            const pulse = Math.sin(zone.pulse) * 0.2 + 0.3;
+            bgColor = `rgba(255, 215, 0, ${pulse})`;
+            borderColor = '#ffd700';
+            glowColor = `rgba(255, 215, 0, ${pulse + 0.2})`;
+        }
+        
+        // Glow
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 20;
+        
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(zone.x, zone.y, zone.w, zone.h);
+        
+        ctx.shadowBlur = 0;
+        
+        // Border
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(zone.x, zone.y, zone.w, zone.h);
+        
+        // Label
+        ctx.fillStyle = zone.state === 'wrong' ? '#666' : '#fff';
+        ctx.font = 'bold 28px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(zone.label, zone.x + zone.w / 2, zone.y + 25);
+        
+        // Option text (wrapped)
+        ctx.font = '11px Segoe UI';
+        ctx.fillStyle = zone.state === 'wrong' ? '#888' : '#eee';
+        wrapText(ctx, zone.text, zone.x + zone.w / 2, zone.y + 55, zone.w - 15, 13);
+        
+        // If correct, draw shield effect
+        if (zone.state === 'correct') {
+            ctx.strokeStyle = 'rgba(78, 205, 196, 0.8)';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([10, 5]);
+            ctx.strokeRect(zone.x - 5, zone.y - 5, zone.w + 10, zone.h + 10);
+            ctx.setLineDash([]);
+        }
+    }
+    
+    // Monsters
+    for (const m of gameState.monsters) {
+        drawMonster(m);
+    }
+    
+    // Player
+    drawPlayer(gameState.player);
+    
+    // Particles
+    for (const part of gameState.particles) {
+        drawParticle(part);
+    }
+    
+    ctx.restore();
+}
+
+function drawPlayer(p) {
+    const blink = p.invulnerable > 0 && Math.floor(p.invulnerable / 5) % 2 === 0;
+    if (blink) return;
+    
+    // Glow
+    ctx.shadowColor = '#4ecdc4';
+    ctx.shadowBlur = 20;
+    
+    // Body
+    const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+    grad.addColorStop(0, '#7fffd4');
+    grad.addColorStop(1, '#2eb5ad');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.shadowBlur = 0;
+    
+    // Face
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(p.x - 5, p.y - 3, 3, 0, Math.PI * 2);
+    ctx.arc(p.x + 5, p.y - 3, 3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Smile
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y + 2, 5, 0, Math.PI);
+    ctx.stroke();
+}
+
+function drawMonster(m) {
+    // Body
+    ctx.shadowColor = m.color;
+    ctx.shadowBlur = 15;
+    
+    ctx.fillStyle = m.color;
+    ctx.beginPath();
+    // Spiky monster shape
+    const spikes = 8;
+    for (let i = 0; i < spikes * 2; i++) {
+        const angle = (Math.PI * 2 * i) / (spikes * 2);
+        const radius = i % 2 === 0 ? m.size : m.size * 0.7;
+        const x = m.x + Math.cos(angle + m.eyeOffset) * radius;
+        const y = m.y + Math.sin(angle + m.eyeOffset) * radius;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.shadowBlur = 0;
+    
+    // Eyes
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(m.x - 5, m.y - 3, 4, 0, Math.PI * 2);
+    ctx.arc(m.x + 5, m.y - 3, 4, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(m.x - 5, m.y - 3, 2, 0, Math.PI * 2);
+    ctx.arc(m.x + 5, m.y - 3, 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Mouth
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(m.x - 5, m.y + 5);
+    ctx.lineTo(m.x - 2, m.y + 8);
+    ctx.lineTo(m.x + 2, m.y + 5);
+    ctx.lineTo(m.x + 5, m.y + 8);
+    ctx.stroke();
+}
+
+function drawParticle(part) {
+    const alpha = part.life / part.maxLife;
+    
+    if (part.type === 'firework') {
+        ctx.fillStyle = part.color;
+        ctx.globalAlpha = alpha;
+        ctx.shadowColor = part.color;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(part.x, part.y, part.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+    } else if (part.type === 'bomb') {
+        ctx.fillStyle = part.color;
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.arc(part.x, part.y, part.size * alpha, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    } else if (part.type === 'smoke') {
+        ctx.fillStyle = part.color;
+        ctx.globalAlpha = alpha * 0.5;
+        ctx.beginPath();
+        ctx.arc(part.x, part.y, part.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    } else if (part.type === 'checkmark') {
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = '#4ecdc4';
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.shadowColor = '#4ecdc4';
+        ctx.shadowBlur = 20;
+        const scale = 1 + (1 - alpha) * 0.5;
+        ctx.save();
+        ctx.translate(part.x, part.y);
+        ctx.scale(scale, scale);
+        ctx.beginPath();
+        ctx.moveTo(-20, 0);
+        ctx.lineTo(-5, 15);
+        ctx.lineTo(25, -20);
+        ctx.stroke();
+        ctx.restore();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+    } else if (part.type === 'xmark') {
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = '#ff6b6b';
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.shadowColor = '#ff6b6b';
+        ctx.shadowBlur = 20;
+        const scale = 1 + (1 - alpha) * 0.5;
+        ctx.save();
+        ctx.translate(part.x, part.y);
+        ctx.scale(scale, scale);
+        ctx.beginPath();
+        ctx.moveTo(-20, -20);
+        ctx.lineTo(20, 20);
+        ctx.moveTo(20, -20);
+        ctx.lineTo(-20, 20);
+        ctx.stroke();
+        ctx.restore();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+    }
+}
+
+function wrapText(context, text, x, y, maxWidth, lineHeight) {
+    const words = text.split(' ');
+    let line = '';
+    let currentY = y;
+    
+    for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = context.measureText(testLine);
+        if (metrics.width > maxWidth && n > 0) {
+            context.fillText(line, x, currentY);
+            line = words[n] + ' ';
+            currentY += lineHeight;
+        } else {
+            line = testLine;
+        }
+    }
+    context.fillText(line, x, currentY);
+}
+
+// ============ GAME FLOW ============
+function startGame() {
+    initAudio();
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    
+    document.getElementById('startScreen').classList.add('hidden');
+    document.getElementById('gameOverScreen').classList.add('hidden');
+    document.getElementById('questionPanel').classList.remove('hidden');
+    
+    gameState.running = true;
+    gameState.currentQuestion = 0;
+    gameState.score = 0;
+    gameState.lives = 3;
+    gameState.wrongZones = new Set();
+    gameState.monsters = [];
+    gameState.particles = [];
+    gameState.player.x = GAME_W / 2;
+    gameState.player.y = GAME_H / 2;
+    gameState.player.invulnerable = 60;
+    
+    gameState.walls = createMaze();
+    loadQuestion(0);
+    
+    // Spawn initial monsters
+    for (let i = 0; i < 2; i++) {
+        gameState.monsters.push(spawnMonster());
+    }
+    
+    updateStats();
+    startBackgroundMusic();
+}
+
+function loadQuestion(index) {
+    const q = questions[index];
+    gameState.currentQuestion = index;
+    gameState.answerZones = createAnswerZones(index);
+    gameState.questionSolved = false;
+    gameState.wrongZones = new Set();
+    
+    document.getElementById('questionNumber').textContent = `Question ${index + 1}`;
+    document.getElementById('questionText').textContent = q.question;
+    updateStats();
+}
+
+function nextQuestion() {
+    loadQuestion(gameState.currentQuestion + 1);
+    // Reset player position
+    gameState.player.x = GAME_W / 2;
+    gameState.player.y = GAME_H / 2;
+    gameState.player.invulnerable = 60;
+    // Add another monster
+    gameState.monsters.push(spawnMonster());
+}
+
+function endGame(won) {
+    gameState.running = false;
+    stopBackgroundMusic();
+    
+    const endScreen = document.getElementById('gameOverScreen');
+    const title = document.getElementById('endTitle');
+    const message = document.getElementById('endMessage');
+    const stats = document.getElementById('endStats');
+    
+    if (won) {
+        title.textContent = '🏆 VICTORY!';
+        title.style.color = '#4ecdc4';
+        message.textContent = 'You conquered the maze and mastered Descriptive Text!';
+        playCorrectSound();
+        setTimeout(playFireworkSound, 300);
+        // Create victory fireworks
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+                createFirework(
+                    100 + Math.random() * (GAME_W - 200),
+                    100 + Math.random() * (GAME_H - 200)
+                );
+            }, i * 300);
+        }
+    } else {
+        title.textContent = '💀 GAME OVER';
+        title.style.color = '#ff6b6b';
+        message.textContent = 'The monsters got you! Try again!';
+        playWrongSound();
+    }
+    
+    stats.innerHTML = `
+        <strong>Final Score: ${gameState.score}</strong><br>
+        Questions Answered: ${gameState.currentQuestion + (won ? 1 : 0)} / ${questions.length}
+    `;
+    
+    endScreen.classList.remove('hidden');
+}
+
+function restartGame() {
+    document.getElementById('gameOverScreen').classList.add('hidden');
+    startGame();
+}
+
+function updateStats() {
+    document.getElementById('questionStat').textContent = `${gameState.currentQuestion + 1}/${questions.length}`;
+    document.getElementById('scoreStat').textContent = gameState.score;
+    document.getElementById('livesStat').textContent = '❤'.repeat(gameState.lives) + '♡'.repeat(3 - gameState.lives);
+}
+
+// ============ INPUT ============
+document.addEventListener('keydown', (e) => {
+    gameState.keys[e.key] = true;
+    // Prevent scrolling
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+        e.preventDefault();
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    gameState.keys[e.key] = false;
+});
+
+// Mobile controls
+document.querySelectorAll('.mobile-btn').forEach(btn => {
+    const dir = btn.dataset.dir;
+    const keyMap = { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' };
+    
+    btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        gameState.keys[keyMap[dir]] = true;
+    });
+    btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        gameState.keys[keyMap[dir]] = false;
+    });
+    btn.addEventListener('mousedown', () => gameState.keys[keyMap[dir]] = true);
+    btn.addEventListener('mouseup', () => gameState.keys[keyMap[dir]] = false);
+    btn.addEventListener('mouseleave', () => gameState.keys[keyMap[dir]] = false);
+});
+
+// ============ GAME LOOP ============
+function gameLoop() {
+    update();
+    render();
+    requestAnimationFrame(gameLoop);
+}
+
+// Initialize
+gameState.walls = createMaze();
+gameLoop();
+</script>
+</body>
+</html>
