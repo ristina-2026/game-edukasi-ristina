@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maze Quest - Procedure Text Adventure</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+        background: radial-gradient(ellipse at center, #2a1810 0%, #0f0a06 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        color: #fff;
+    }
+
+    .game-wrapper {
+        position: relative;
+        width: 95vw;
+        max-width: 900px;
+    }
+
+    .game-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        background: rgba(30, 15, 5, 0.85);
+        border-radius: 12px 12px 0 0;
+        border: 1px solid rgba(255, 170, 0, 0.25);
+        border-bottom: none;
+    }
+
+    .game-title {
+        font-size: 1.3em;
+        color: #ffaa00;
+        text-shadow: 0 0 15px rgba(255, 170, 0, 0.6);
+        letter-spacing: 1px;
+    }
+
+    .stats {
+        display: flex;
+        gap: 20px;
+        font-size: 0.95em;
+    }
+
+    .stat { display: flex; align-items: center; gap: 6px; }
+    .stat-label { color: #c9a878; }
+    .stat-value { color: #ffd700; font-weight: bold; }
+    .stat-value.lives { color: #ff5555; }
+
+    canvas {
+        display: block;
+        background: #0f0a06;
+        border: 1px solid rgba(255, 170, 0, 0.25);
+        border-radius: 0 0 12px 12px;
+        width: 100%;
+        height: auto;
+    }
+
+    .question-panel {
+        position: absolute;
+        top: 75px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(25, 12, 4, 0.92);
+        backdrop-filter: blur(10px);
+        border: 2px solid #ffaa00;
+        border-radius: 12px;
+        padding: 14px 24px;
+        max-width: 85%;
+        width: 620px;
+        text-align: center;
+        z-index: 10;
+        box-shadow: 0 0 30px rgba(255, 170, 0, 0.3);
+    }
+
+    .question-number {
+        display: inline-block;
+        background: #ffaa00;
+        color: #2a1810;
+        padding: 2px 14px;
+        border-radius: 12px;
+        font-weight: bold;
+        font-size: 0.85em;
+        margin-bottom: 8px;
+    }
+
+    .question-text {
+        font-size: 0.95em;
+        line-height: 1.5;
+        color: #fff;
+    }
+
+    .overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 8, 3, 0.95);
+        backdrop-filter: blur(10px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+    }
+
+    .overlay h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        background: linear-gradient(135deg, #ffaa00, #ff6b35);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .overlay p {
+        color: #d9b98a;
+        margin-bottom: 12px;
+        line-height: 1.6;
+        max-width: 520px;
+    }
+
+    .btn {
+        margin-top: 20px;
+        padding: 14px 40px;
+        font-size: 1.1em;
+        font-weight: bold;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #ffaa00, #ff6b35);
+        color: #fff;
+        box-shadow: 0 5px 20px rgba(255, 170, 0, 0.4);
+    }
+
+    .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 30px rgba(255, 170, 0, 0.6);
+    }
+
+    .btn.danger {
+        background: linear-gradient(135deg, #ff5555, #cc2222);
+        box-shadow: 0 5px 20px rgba(255, 85, 85, 0.4);
+    }
+
+    .controls-info {
+        margin-top: 20px;
+        padding: 15px 20px;
+        background: rgba(255, 170, 0, 0.07);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 170, 0, 0.25);
+        max-width: 520px;
+    }
+
+    .controls-info h3 { color: #ffaa00; margin-bottom: 10px; }
+
+    .key {
+        display: inline-block;
+        background: #3a2510;
+        color: #ffd700;
+        padding: 4px 10px;
+        border-radius: 5px;
+        margin: 0 3px;
+        font-family: monospace;
+        border: 1px solid #ffaa00;
+        box-shadow: 0 2px 0 #1a0f05;
+    }
+
+    .hidden { display: none !important; }
+
+    .mobile-controls {
+        display: none;
+        margin-top: 15px;
+        gap: 5px;
+        justify-content: center;
+    }
+
+    .mobile-btn {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 170, 0, 0.12);
+        border: 2px solid rgba(255, 170, 0, 0.3);
+        border-radius: 12px;
+        color: #ffd700;
+        font-size: 1.5em;
+        cursor: pointer;
+        user-select: none;
+        touch-action: manipulation;
+    }
+
+    .mobile-btn:active {
+        background: rgba(255, 170, 0, 0.3);
+        border-color: #ffaa00;
+    }
+
+    @media (max-width: 768px) {
+        .mobile-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(2, 60px);
+        }
+        .game-title { font-size: 1em; }
+        .stats { gap: 10px; font-size: 0.8em; }
+        .question-panel { font-size: 0.82em; padding: 10px 14px; max-width: 95%; width: auto; }
+    }
+</style>
+</head>
+<body>
+<div class="game-wrapper">
+    <div class="game-header">
+        <div class="game-title">👨‍🍳 MAZE QUEST</div>
+        <div class="stats">
+            <div class="stat">
+                <span class="stat-label">Q:</span>
+                <span class="stat-value" id="questionStat">1/5</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Score:</span>
+                <span class="stat-value" id="scoreStat">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Lives:</span>
+                <span class="stat-value lives" id="livesStat">❤❤❤</span>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" width="900" height="600"></canvas>
+
+    <div class="question-panel" id="questionPanel">
+        <div class="question-number" id="questionNumber">Question 1</div>
+        <div class="question-text" id="questionText">Loading...</div>
+    </div>
+
+    <!-- Start Screen -->
+    <div class="overlay" id="startScreen">
+        <h1>👨‍🍳 MAZE QUEST</h1>
+        <p style="color: #ffaa00; font-weight: bold; font-size: 1.2em;">Procedure Text Adventure</p>
+        <p>Navigate the kitchen maze to find the correct answers about <strong>Procedure Text</strong>. Avoid the 2 naughty gremlins! 👾</p>
+        <div class="controls-info">
+            <h3>🎮 How to Play</h3>
+            <p>Move with <span class="key">↑</span><span class="key">↓</span><span class="key">←</span><span class="key">→</span> or <span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span></p>
+            <p style="margin-top: 10px; font-size: 0.9em; color: #c9a878;">
+                🟡 Gold Zones = Answer Options (A, B, C, D)<br>
+                ✅ Correct = Shield + Fireworks + Next Question<br>
+                ❌ Wrong = Bomb + X Mark (try another zone!)<br>
+                👾 Only <strong style="color:#ff8866;">2 gremlins</strong> — they move randomly, don't get caught!
+            </p>
+        </div>
+        <button class="btn" onclick="startGame()">▶ START ADVENTURE</button>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div class="overlay hidden" id="gameOverScreen">
+        <h1 id="endTitle">GAME OVER</h1>
+        <p id="endMessage">The gremlins got you!</p>
+        <p id="endStats"></p>
+        <button class="btn danger" onclick="restartGame()">🔄 PLAY AGAIN</button>
+    </div>
+
+    <!-- Mobile Controls -->
+    <div class="mobile-controls">
+        <div></div>
+        <button class="mobile-btn" data-dir="up">↑</button>
+        <div></div>
+        <button class="mobile-btn" data-dir="left">←</button>
+        <button class="mobile-btn" data-dir="down">↓</button>
+        <button class="mobile-btn" data-dir="right">→</button>
+    </div>
+</div>
+
+<script>
+// ============ AUDIO SYSTEM (Web Audio API) ============
+let audioCtx = null;
+let musicInterval = null;
+let musicGain = null;
+let sfxEnabled = true;
+
+function initAudio() {
+    if (audioCtx) return;
+    try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        musicGain = audioCtx.createGain();
+        musicGain.gain.value = 0.06;
+        musicGain.connect(audioCtx.destination);
+    } catch (e) { console.log('Audio not supported'); }
+}
+
+function playNote(freq, duration, type = 'sine', volume = 0.3, delay = 0) {
+    if (!audioCtx || !sfxEnabled) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, audioCtx.currentTime + delay);
+    gain.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + delay + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime + delay);
+    osc.stop(audioCtx.currentTime + delay + duration);
+}
+
+function playCorrectSound() {
+    playNote(523.25, 0.12, 'sine', 0.25, 0);
+    playNote(659.25, 0.12, 'sine', 0.25, 0.08);
+    playNote(783.99, 0.12, 'sine', 0.25, 0.16);
+    playNote(1046.5, 0.3, 'sine', 0.3, 0.24);
+}
+
+function playWrongSound() {
+    playNote(400, 0.15, 'sawtooth', 0.2, 0);
+    playNote(300, 0.15, 'sawtooth', 0.2, 0.12);
+    playNote(200, 0.35, 'sawtooth', 0.25, 0.24);
+}
+
+function playBombSound() {
+    if (!audioCtx || !sfxEnabled) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.5);
+    gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.5);
+}
+
+function playFireworkSound() {
+    if (!audioCtx || !sfxEnabled) return;
+    for (let i = 0; i < 8; i++) {
+        setTimeout(() => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = 1200 + Math.random() * 2000;
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }, i * 45);
+    }
+}
+
+function playMonsterHitSound() {
+    playNote(150, 0.25, 'square', 0.3, 0);
+    playNote(100, 0.25, 'square', 0.3, 0.12);
+}
+
+// Background music - cheerful cooking-show style melody (instrumental only)
+function startBackgroundMusic() {
+    if (!audioCtx) return;
+    const melody = [
+        { note: 392.00, dur: 0.25 }, // G4
+        { note: 440.00, dur: 0.25 }, // A4
+        { note: 493.88, dur: 0.25 }, // B4
+        { note: 392.00, dur: 0.25 }, // G4
+        { note: 523.25, dur: 0.5 },  // C5
+        { note: 493.88, dur: 0.25 }, // B4
+        { note: 440.00, dur: 0.25 }, // A4
+        { note: 392.00, dur: 0.5 },  // G4
+        { note: 440.00, dur: 0.25 }, // A4
+        { note: 493.88, dur: 0.25 }, // B4
+        { note: 587.33, dur: 0.25 }, // D5
+        { note: 523.25, dur: 0.25 }, // C5
+        { note: 493.88, dur: 0.5 },  // B4
+        { note: 440.00, dur: 0.5 },  // A4
+    ];
+    
+    let noteIndex = 0;
+    let time = audioCtx.currentTime + 0.1;
+    
+    function scheduleNotes() {
+        while (time < audioCtx.currentTime + 2) {
+            const note = melody[noteIndex % melody.length];
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = note.note;
+            gain.gain.setValueAtTime(0, time);
+            gain.gain.linearRampToValueAtTime(0.05, time + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + note.dur);
+            osc.connect(gain);
+            gain.connect(musicGain);
+            osc.start(time);
+            osc.stop(time + note.dur);
+            time += note.dur;
+            noteIndex++;
+        }
+    }
+    scheduleNotes();
+    musicInterval = setInterval(scheduleNotes, 900);
+}
+
+function stopBackgroundMusic() {
+    if (musicInterval) { clearInterval(musicInterval); musicInterval = null; }
+}
+
+// ============ GAME DATA - PROCEDURE TEXT ============
+const questions = [
+    {
+        question: "What is the main purpose of a procedure text?",
+        options: [
+            "To amuse or entertain readers with a story",
+            "To explain how something is made or done through a sequence of steps",
+            "To describe a particular person or place in detail",
+            "To present two points of view about an issue"
+        ],
+        correct: 1
+    },
+    {
+        question: "What is the correct generic structure of a procedure text?",
+        options: [
+            "Orientation - Complication - Resolution",
+            "Identification - Description",
+            "Goal - Materials - Steps",
+            "Thesis - Arguments - Reiteration"
+        ],
+        correct: 2
+    },
+    {
+        question: "Which tense is mostly used in a procedure text?",
+        options: [
+            "Simple Past Tense",
+            "Past Continuous Tense",
+            "Future Perfect Tense",
+            "Simple Present Tense"
+        ],
+        correct: 3
+    },
+    {
+        question: "Words like 'cut', 'stir', 'pour', and 'mix' commonly used in procedure text are called...",
+        options: [
+            "Adjectives",
+            "Action verbs",
+            "Nouns",
+            "Adverbs"
+        ],
+        correct: 1
+    },
+    {
+        question: "Which of the following is an example of a procedure text?",
+        options: [
+            "A story about Malin Kundang",
+            "A text describing Borobudur Temple",
+            "A recipe on how to make fried rice",
+            "A news report about a traffic accident"
+        ],
+        correct: 2
+    }
+];
+
+// ============ GAME STATE ============
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const GAME_W = 900;
+const GAME_H = 600;
+const MAX_MONSTERS = 2; // Monster hanya 2 saja
+
+let gameState = {
+    running: false,
+    currentQuestion: 0,
+    score: 0,
+    lives: 3,
+    player: { x: GAME_W / 2, y: GAME_H / 2, size: 16, speed: 3.5, invulnerable: 0 },
+    monsters: [],
+    answerZones: [],
+    walls: [],
+    particles: [],
+    keys: {},
+    wrongZones: new Set(),
+    questionSolved: false,
+    shakeTime: 0,
+    frameCount: 0
+};
+
+// ============ MAZE LAYOUT ============
+function createMaze() {
+    const walls = [];
+    const t = 14;
+    
+    // Borders
+    walls.push({ x: 0, y: 0, w: GAME_W, h: t });
+    walls.push({ x: 0, y: GAME_H - t, w: GAME_W, h: t });
+    walls.push({ x: 0, y: 0, w: t, h: GAME_H });
+    walls.push({ x: GAME_W - t, y: 0, w: t, h: GAME_H });
+    
+    // Internal maze
+    walls.push({ x: 160, y: 160, w: 180, h: t });
+    walls.push({ x: 560, y: 160, w: 180, h: t });
+    walls.push({ x: 200, y: 430, w: 180, h: t });
+    walls.push({ x: 520, y: 430, w: 180, h: t });
+    
+    walls.push({ x: 160, y: 200, w: t, h: 140 });
+    walls.push({ x: 726, y: 200, w: t, h: 140 });
+    walls.push({ x: 400, y: 240, w: t, h: 120 });
+    walls.push({ x: 486, y: 240, w: t, h: 120 });
+    
+    walls.push({ x: 300, y: 280, w: 60, h: t });
+    walls.push({ x: 540, y: 280, w: 60, h: t });
+    
+    return walls;
+}
+
+// ============ ANSWER ZONES ============
+function createAnswerZones(questionIndex) {
+    const q = questions[questionIndex];
+    const zones = [];
+    const zs = 120;
+    const positions = [
+        { x: 35, y: 35, label: 'A' },
+        { x: GAME_W - 35 - zs, y: 35, label: 'B' },
+        { x: 35, y: GAME_H - 35 - zs, label: 'C' },
+        { x: GAME_W - 35 - zs, y: GAME_H - 35 - zs, label: 'D' }
+    ];
+    
+    for (let i = 0; i < 4; i++) {
+        zones.push({
+            x: positions[i].x, y: positions[i].y, w: zs, h: zs,
+            label: positions[i].label, optionIndex: i,
+            text: q.options[i], isCorrect: i === q.correct,
+            state: 'active', pulse: Math.random() * Math.PI * 2
+        });
+    }
+    return zones;
+}
+
+// ============ MONSTERS (HANYA 2) ============
+function spawnMonster() {
+    const side = Math.floor(Math.random() * 4);
+    let x, y;
+    const m = 60;
+    switch (side) {
+        case 0: x = m + Math.random() * (GAME_W - 2*m); y = m; break;
+        case 1: x = GAME_W - m; y = m + Math.random() * (GAME_H - 2*m); break;
+        case 2: x = m + Math.random() * (GAME_W - 2*m); y = GAME_H - m; break;
+        case 3: x = m; y = m + Math.random() * (GAME_H - 2*m); break;
+    }
+    return {
+        x, y, size: 18,
+        // Kecepatan bertambah sedikit tiap soal agar tetap menantang
+        speed: 1.5 + Math.random() * 0.6 + (gameState.currentQuestion * 0.2),
+        vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2,
+        dirTimer: 0,
+        hue: Math.random() > 0.5 ? 280 : 130, // Ungu atau hijau
+        eyePhase: Math.random() * Math.PI * 2
+    };
+}
+
+// ============ COLLISION ============
+function circleRectCollision(cx, cy, cr, rx, ry, rw, rh) {
+    const closestX = Math.max(rx, Math.min(cx, rx + rw));
+    const closestY = Math.max(ry, Math.min(cy, ry + rh));
+    const dx = cx - closestX, dy = cy - closestY;
+    return (dx * dx + dy * dy) < (cr * cr);
+}
+
+function checkWallCollision(x, y, size) {
+    for (const wall of gameState.walls) {
+        if (circleRectCollision(x, y, size, wall.x, wall.y, wall.w, wall.h)) return true;
+    }
+    return false;
+}
+
+// ============ PARTICLES ============
+function createFirework(x, y) {
+    const colors = ['#ffd700', '#ff6b35', '#ffaa00', '#ff69b4', '#00ff88', '#ffffff'];
+    for (let i = 0; i < 70; i++) {
+        const angle = (Math.PI * 2 * i) / 70 + Math.random() * 0.3;
+        const speed = 2 + Math.random() * 6;
+        gameState.particles.push({
+            x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+            life: 60 + Math.random() * 30, maxLife: 90,
+            size: 2 + Math.random() * 3,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            type: 'firework'
+        });
+    }
+}
+
+function createBomb(x, y) {
+    for (let i = 0; i < 45; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 1 + Math.random() * 5;
+        gameState.particles.push({
+            x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+            life: 40 + Math.random() * 20, maxLife: 60,
+            size: 3 + Math.random() * 4,
+            color: Math.random() > 0.5 ? '#ff4500' : '#ff8c00',
+            type: 'bomb'
+        });
+    }
+    for (let i = 0; i < 20; i++) {
+        gameState.particles.push({
+            x: x + (Math.random()-0.5)*40, y: y + (Math.random()-0.5)*40,
+            vx: (Math.random()-0.5)*1.5, vy: -Math.random()*2,
+            life: 60, maxLife: 60, size: 8+Math.random()*8,
+            color: '#333', type: 'smoke'
+        });
+    }
+}
+
+function createCheckmark(x, y) {
+    gameState.particles.push({ x, y, vx: 0, vy: 0, life: 80, maxLife: 80, type: 'checkmark' });
+}
+
+function createXMark(x, y) {
+    gameState.particles.push({ x, y, vx: 0, vy: 0, life: 80, maxLife: 80, type: 'xmark' });
+}
+
+// ============ UPDATE ============
+function update() {
+    if (!gameState.running) return;
+    gameState.frameCount++;
+    const p = gameState.player;
+    
+    // Player movement
+    let dx = 0, dy = 0;
+    if (gameState.keys['ArrowUp'] || gameState.keys['w'] || gameState.keys['W']) dy -= 1;
+    if (gameState.keys['ArrowDown'] || gameState.keys['s'] || gameState.keys['S']) dy += 1;
+    if (gameState.keys['ArrowLeft'] || gameState.keys['a'] || gameState.keys['A']) dx -= 1;
+    if (gameState.keys['ArrowRight'] || gameState.keys['d'] || gameState.keys['D']) dx += 1;
+    
+    if (dx !== 0 && dy !== 0) { dx *= 0.707; dy *= 0.707; }
+    
+    const newX = p.x + dx * p.speed;
+    const newY = p.y + dy * p.speed;
+    
+    if (!checkWallCollision(newX, p.y, p.size)) p.x = newX;
+    if (!checkWallCollision(p.x, newY, p.size)) p.y = newY;
+    
+    p.x = Math.max(p.size, Math.min(GAME_W - p.size, p.x));
+    p.y = Math.max(p.size, Math.min(GAME_H - p.size, p.y));
+    
+    if (p.invulnerable > 0) p.invulnerable--;
+    
+    // Update monsters (hanya 2, bergerak random)
+    for (const m of gameState.monsters) {
+        m.dirTimer--;
+        if (m.dirTimer <= 0) {
+            // Pergerakan random, kadang sedikit mengejar
+            if (Math.random() < 0.3) {
+                const ang = Math.atan2(p.y - m.y, p.x - m.x);
+                m.vx = Math.cos(ang) * m.speed;
+                m.vy = Math.sin(ang) * m.speed;
+            } else {
+                const ang = Math.random() * Math.PI * 2;
+                m.vx = Math.cos(ang) * m.speed;
+                m.vy = Math.sin(ang) * m.speed;
+            }
+            m.dirTimer = 50 + Math.random() * 100;
+        }
+        
+        const nmx = m.x + m.vx, nmy = m.y + m.vy;
+        if (!checkWallCollision(nmx, m.y, m.size)) m.x = nmx; else m.vx = -m.vx;
+        if (!checkWallCollision(m.x, nmy, m.size)) m.y = nmy; else m.vy = -m.vy;
+        
+        if (m.x < m.size || m.x > GAME_W - m.size) m.vx = -m.vx;
+        if (m.y < m.size || m.y > GAME_H - m.size) m.vy = -m.vy;
+        
+        m.x = Math.max(m.size, Math.min(GAME_W - m.size, m.x));
+        m.y = Math.max(m.size, Math.min(GAME_H - m.size, m.y));
+        
+        // Monster menyentuh player
+        if (p.invulnerable <= 0) {
+            const ddx = p.x - m.x, ddy = p.y - m.y;
+            if (Math.sqrt(ddx*ddx + ddy*ddy) < p.size + m.size) {
+                gameState.lives--;
+                p.invulnerable = 120;
+                gameState.shakeTime = 25;
+                playMonsterHitSound();
+                createBomb(p.x, p.y);
+                updateStats();
+                if (gameState.lives <= 0) { endGame(false); return; }
+            }
+        }
+    }
+    
+    // TIDAK ADA spawn monster tambahan — selalu hanya 2
+    
+    // Check answer zones
+    if (!gameState.questionSolved) {
+        for (const zone of gameState.answerZones) {
+            if (zone.state !== 'active') continue;
+            if (circleRectCollision(p.x, p.y, p.size, zone.x, zone.y, zone.w, zone.h)) {
+                if (zone.isCorrect) {
+                    zone.state = 'correct';
+                    gameState.questionSolved = true;
+                    gameState.score += 100;
+                    
+                    createFirework(zone.x + zone.w/2, zone.y + zone.h/2);
+                    createCheckmark(zone.x + zone.w/2, zone.y + zone.h/2);
+                    playCorrectSound();
+                    playFireworkSound();
+                    updateStats();
+                    
+                    setTimeout(() => {
+                        if (gameState.currentQuestion < questions.length - 1) nextQuestion();
+                        else endGame(true);
+                    }, 2200);
+                } else {
+                    zone.state = 'wrong';
+                    gameState.wrongZones.add(zone.optionIndex);
+                    createBomb(zone.x + zone.w/2, zone.y + zone.h/2);
+                    createXMark(zone.x + zone.w/2, zone.y + zone.h/2);
+                    playWrongSound();
+                    playBombSound();
+                    gameState.shakeTime = 15;
+                }
+                break;
+            }
+        }
+    }
+    
+    // Update particles
+    for (let i = gameState.particles.length - 1; i >= 0; i--) {
+        const part = gameState.particles[i];
+        part.x += part.vx; part.y += part.vy; part.life--;
+        if (part.type === 'firework') { part.vy += 0.1; part.vx *= 0.98; }
+        else if (part.type === 'bomb') { part.vx *= 0.95; part.vy *= 0.95; }
+        if (part.life <= 0) gameState.particles.splice(i, 1);
+    }
+    
+    if (gameState.shakeTime > 0) gameState.shakeTime--;
+    for (const zone of gameState.answerZones) zone.pulse += 0.05;
+}
+
+// ============ RENDER ============
+function render() {
+    ctx.save();
+    
+    if (gameState.shakeTime > 0) {
+        const intensity = gameState.shakeTime * 0.6;
+        ctx.translate((Math.random()-0.5)*intensity, (Math.random()-0.5)*intensity);
+    }
+    
+    // Background warm kitchen
+    const bgGrad = ctx.createRadialGradient(GAME_W/2, GAME_H/2, 50, GAME_W/2, GAME_H/2, 550);
+    bgGrad.addColorStop(0, '#2a1810');
+    bgGrad.addColorStop(1, '#0f0a06');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, GAME_W, GAME_H);
+    
+    // Warm grid
+    ctx.strokeStyle = 'rgba(255, 200, 100, 0.035)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < GAME_W; x += 30) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,GAME_H); ctx.stroke(); }
+    for (let y = 0; y < GAME_H; y += 30) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(GAME_W,y); ctx.stroke(); }
+    
+    // Walls (wooden style)
+    for (const wall of gameState.walls) {
+        const wg = ctx.createLinearGradient(wall.x, wall.y, wall.x+wall.w, wall.y+wall.h);
+        wg.addColorStop(0, '#5a3a20');
+        wg.addColorStop(1, '#3a2510');
+        ctx.fillStyle = wg;
+        ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
+        ctx.strokeStyle = 'rgba(255, 180, 80, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(wall.x, wall.y, wall.w, wall.h);
+    }
+    
+    // Answer zones
+    for (const zone of gameState.answerZones) {
+        let bgColor, borderColor, glowColor;
+        
+        if (zone.state === 'correct') {
+            bgColor = 'rgba(0, 255, 136, 0.2)';
+            borderColor = '#00ff88';
+            glowColor = 'rgba(0, 255, 136, 0.6)';
+        } else if (zone.state === 'wrong') {
+            bgColor = 'rgba(255, 85, 85, 0.12)';
+            borderColor = '#444';
+            glowColor = 'rgba(255, 85, 85, 0.2)';
+        } else {
+            const pulse = Math.sin(zone.pulse) * 0.15 + 0.2;
+            bgColor = `rgba(255, 200, 60, ${pulse})`;
+            borderColor = '#ffaa00';
+            glowColor = `rgba(255, 200, 60, ${pulse + 0.15})`;
+        }
+        
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(zone.x, zone.y, zone.w, zone.h);
+        ctx.shadowBlur = 0;
+        
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(zone.x, zone.y, zone.w, zone.h);
+        
+        // Label
+        ctx.fillStyle = zone.state === 'wrong' ? '#666' : '#fff';
+        ctx.font = 'bold 26px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(zone.label, zone.x + zone.w/2, zone.y + 22);
+        
+        // Option text
+        ctx.font = '11px Segoe UI';
+        ctx.fillStyle = zone.state === 'wrong' ? '#777' : '#ffe8c0';
+        wrapText(ctx, zone.text, zone.x + zone.w/2, zone.y + 50, zone.w - 14, 13);
+        
+        // Shield effect for correct
+        if (zone.state === 'correct') {
+            ctx.strokeStyle = 'rgba(0, 255, 136, 0.7)';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([10, 5]);
+            ctx.strokeRect(zone.x - 6, zone.y - 6, zone.w + 12, zone.h + 12);
+            ctx.setLineDash([]);
+            ctx.fillStyle = 'rgba(0, 255, 136, 0.08)';
+            ctx.fillRect(zone.x - 6, zone.y - 6, zone.w + 12, zone.h + 12);
+        }
+    }
+    
+    // Monsters
+    for (const m of gameState.monsters) drawMonster(m);
+    
+    // Player
+    drawPlayer(gameState.player);
+    
+    // Particles
+    for (const part of gameState.particles) drawParticle(part);
+    
+    ctx.restore();
+}
+
+function drawPlayer(p) {
+    if (p.invulnerable > 0 && Math.floor(p.invulnerable / 5) % 2 === 0) return;
+    
+    ctx.shadowColor = '#ffaa00';
+    ctx.shadowBlur = 25;
+    
+    const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+    grad.addColorStop(0, '#ffe0a0');
+    grad.addColorStop(1, '#ff8830');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    // Face
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(p.x - 5, p.y - 3, 3, 0, Math.PI * 2);
+    ctx.arc(p.x + 5, p.y - 3, 3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = '#2a1810';
+    ctx.beginPath();
+    ctx.arc(p.x - 5, p.y - 3, 1.5, 0, Math.PI * 2);
+    ctx.arc(p.x + 5, p.y - 3, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y + 2, 5, 0.1, Math.PI - 0.1);
+    ctx.stroke();
+}
+
+function drawMonster(m) {
+    ctx.shadowColor = `hsl(${m.hue}, 80%, 55%)`;
+    ctx.shadowBlur = 15;
+    ctx.fillStyle = `hsl(${m.hue}, 80%, 55%)`;
+    
+    ctx.beginPath();
+    const spikes = 8;
+    for (let i = 0; i < spikes * 2; i++) {
+        const angle = (Math.PI * 2 * i) / (spikes * 2) + gameState.frameCount * 0.02;
+        const radius = i % 2 === 0 ? m.size : m.size * 0.65;
+        const x = m.x + Math.cos(angle) * radius;
+        const y = m.y + Math.sin(angle) * radius;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    // Eyes
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(m.x - 5, m.y - 3, 4, 0, Math.PI * 2);
+    ctx.arc(m.x + 5, m.y - 3, 4, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(m.x - 5, m.y - 3, 2, 0, Math.PI * 2);
+    ctx.arc(m.x + 5, m.y - 3, 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Naughty mouth
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(m.x - 6, m.y + 6);
+    ctx.lineTo(m.x - 2, m.y + 3);
+    ctx.lineTo(m.x + 2, m.y + 6);
+    ctx.lineTo(m.x + 6, m.y + 3);
+    ctx.stroke();
+}
+
+function drawParticle(part) {
+    const alpha = part.life / part.maxLife;
+    
+    if (part.type === 'firework') {
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = part.color;
+        ctx.shadowColor = part.color;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(part.x, part.y, part.size * alpha, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+    } else if (part.type === 'bomb') {
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = part.color;
+        ctx.beginPath();
+        ctx.arc(part.x, part.y, part.size * alpha, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    } else if (part.type === 'smoke') {
+        ctx.globalAlpha = alpha * 0.4;
+        ctx.fillStyle = part.color;
+        ctx.beginPath();
+        ctx.arc(part.x, part.y, part.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    } else if (part.type === 'checkmark') {
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = '#00ff88';
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.shadowColor = '#00ff88';
+        ctx.shadowBlur = 25;
+        const scale = 1 + (1 - alpha) * 0.5;
+        ctx.save();
+        ctx.translate(part.x, part.y);
+        ctx.scale(scale, scale);
+        ctx.beginPath();
+        ctx.moveTo(-20, 0);
+        ctx.lineTo(-5, 15);
+        ctx.lineTo(25, -20);
+        ctx.stroke();
+        ctx.restore();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+    } else if (part.type === 'xmark') {
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = '#ff5555';
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.shadowColor = '#ff5555';
+        ctx.shadowBlur = 25;
+        const scale = 1 + (1 - alpha) * 0.5;
+        ctx.save();
+        ctx.translate(part.x, part.y);
+        ctx.scale(scale, scale);
+        ctx.beginPath();
+        ctx.moveTo(-20, -20); ctx.lineTo(20, 20);
+        ctx.moveTo(20, -20); ctx.lineTo(-20, 20);
+        ctx.stroke();
+        ctx.restore();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+    }
+}
+
+function wrapText(context, text, x, y, maxWidth, lineHeight) {
+    const words = text.split(' ');
+    let line = '';
+    let currentY = y;
+    for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = context.measureText(testLine);
+        if (metrics.width > maxWidth && n > 0) {
+            context.fillText(line.trim(), x, currentY);
+            line = words[n] + ' ';
+            currentY += lineHeight;
+        } else { line = testLine; }
+    }
+    context.fillText(line.trim(), x, currentY);
+}
+
+// ============ GAME FLOW ============
+function startGame() {
+    initAudio();
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    
+    document.getElementById('startScreen').classList.add('hidden');
+    document.getElementById('gameOverScreen').classList.add('hidden');
+    document.getElementById('questionPanel').classList.remove('hidden');
+    
+    gameState.running = true;
+    gameState.currentQuestion = 0;
+    gameState.score = 0;
+    gameState.lives = 3;
+    gameState.wrongZones = new Set();
+    gameState.monsters = [];
+    gameState.particles = [];
+    gameState.frameCount = 0;
+    gameState.player.x = GAME_W / 2;
+    gameState.player.y = GAME_H / 2;
+    gameState.player.invulnerable = 60;
+    gameState.walls = createMaze();
+    
+    loadQuestion(0);
+    
+    // Spawn tepat 2 monster saja
+    for (let i = 0; i < MAX_MONSTERS; i++) gameState.monsters.push(spawnMonster());
+    
+    updateStats();
+    startBackgroundMusic();
+}
+
+function loadQuestion(index) {
+    gameState.currentQuestion = index;
+    gameState.answerZones = createAnswerZones(index);
+    gameState.questionSolved = false;
+    gameState.wrongZones = new Set();
+    
+    document.getElementById('questionNumber').textContent = `Question ${index + 1}`;
+    document.getElementById('questionText').textContent = questions[index].question;
+    updateStats();
+}
+
+function nextQuestion() {
+    loadQuestion(gameState.currentQuestion + 1);
+    gameState.player.x = GAME_W / 2;
+    gameState.player.y = GAME_H / 2;
+    gameState.player.invulnerable = 60;
+    // Tetap hanya 2 monster — respawn dengan kecepatan sedikit lebih tinggi
+    gameState.monsters = [];
+    for (let i = 0; i < MAX_MONSTERS; i++) gameState.monsters.push(spawnMonster());
+}
+
+function endGame(won) {
+    gameState.running = false;
+    stopBackgroundMusic();
+    
+    const endScreen = document.getElementById('gameOverScreen');
+    const title = document.getElementById('endTitle');
+    const message = document.getElementById('endMessage');
+    const stats = document.getElementById('endStats');
+    
+    if (won) {
+        title.textContent = '🏆 MASTER CHEF!';
+        title.style.color = '#00ff88';
+        message.textContent = 'You conquered the maze and mastered Procedure Text! All recipes completed!';
+        playCorrectSound();
+        setTimeout(playFireworkSound, 300);
+        for (let i = 0; i < 6; i++) {
+            setTimeout(() => createFirework(100+Math.random()*(GAME_W-200), 100+Math.random()*(GAME_H-200)), i*250);
+        }
+    } else {
+        title.textContent = '💀 GAME OVER';
+        title.style.color = '#ff5555';
+        message.textContent = 'The gremlins ruined your kitchen! Study Procedure Text and try again!';
+        playWrongSound();
+    }
+    
+    stats.innerHTML = `<strong>Final Score: ${gameState.score}</strong><br>Questions Cleared: ${gameState.currentQuestion + (won ? 1 : 0)} / ${questions.length}`;
+    endScreen.classList.remove('hidden');
+}
+
+function restartGame() {
+    document.getElementById('gameOverScreen').classList.add('hidden');
+    startGame();
+}
+
+function updateStats() {
+    document.getElementById('questionStat').textContent = `${gameState.currentQuestion + 1}/${questions.length}`;
+    document.getElementById('scoreStat').textContent = gameState.score;
+    document.getElementById('livesStat').textContent = '❤'.repeat(Math.max(0, gameState.lives)) + '♡'.repeat(Math.max(0, 3 - gameState.lives));
+}
+
+// ============ INPUT ============
+document.addEventListener('keydown', (e) => {
+    gameState.keys[e.key] = true;
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+});
+document.addEventListener('keyup', (e) => { gameState.keys[e.key] = false; });
+
+document.querySelectorAll('.mobile-btn').forEach(btn => {
+    const dir = btn.dataset.dir;
+    const keyMap = { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' };
+    btn.addEventListener('touchstart', (e) => { e.preventDefault(); gameState.keys[keyMap[dir]] = true; });
+    btn.addEventListener('touchend', (e) => { e.preventDefault(); gameState.keys[keyMap[dir]] = false; });
+    btn.addEventListener('mousedown', () => gameState.keys[keyMap[dir]] = true);
+    btn.addEventListener('mouseup', () => gameState.keys[keyMap[dir]] = false);
+    btn.addEventListener('mouseleave', () => gameState.keys[keyMap[dir]] = false);
+});
+
+// ============ GAME LOOP ============
+function gameLoop() {
+    update();
+    render();
+    requestAnimationFrame(gameLoop);
+}
+
+gameState.walls = createMaze();
+gameLoop();
+</script>
+</body>
+</html>
